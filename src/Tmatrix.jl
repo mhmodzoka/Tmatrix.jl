@@ -50,6 +50,7 @@ end
  - this can be either 1D arrays for axi-symmetric particles or 2D arrays for general 3D particles
  """
 function get_r_θ_ϕ_arrays(geometry; angular_resolution = 0.5)
+    # TODO: use a package that takes a mesh and do integrals
     if geometry isa String
         if geometry in ["wire", "cylinder"]
         elseif geometry in ["spheroid", "ellipsoid"]
