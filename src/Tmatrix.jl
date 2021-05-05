@@ -10,11 +10,11 @@ module Tmatrix
 #import .VectorSphericalHarmonics
 using VectorSphericalWaves
 using StaticArrays
-#VSWF = VectorSphericalHarmonics # TODO: add "const" before this line
 using EllipsisNotation
-using HCubature
 using LinearAlgebra
 using Trapz
+
+#using HCubature # I may consider this package for numerical integrals
 
 export calculate_Tmatrix_for_spheroid
 #############################################################
