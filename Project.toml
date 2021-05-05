@@ -1,0 +1,7 @@
+name = "Tmatrix"
+uuid = "3a99a3e7-f6f9-44da-a648-2a220c0bb78f"
+authors = ["melzouka "]
+version = "0.1.0"
+
+[deps]
+VectorSphericalWaves = "bf4a7d2c-6958-4c00-8946-baf74e22a0dc"
