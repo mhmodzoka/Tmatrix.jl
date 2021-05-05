@@ -520,6 +520,8 @@ function save_Tmatrix_to_HDF5_file(T, HDF5_filename)
     h5write(HDF5_filename, "Tmatrix_imag", imag(T))
 end
 
+end
+
 """
 #############################################################
 # testing
