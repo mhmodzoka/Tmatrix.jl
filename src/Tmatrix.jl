@@ -13,6 +13,7 @@ using StaticArrays
 using EllipsisNotation
 using LinearAlgebra
 using Trapz
+using HDF5
 
 #using HCubature # I may consider this package for numerical integrals
 
@@ -52,7 +53,7 @@ end
 function get_r_θ_ϕ_arrays(geometry; angular_resolution = 0.5)
     # TODO: use a package that takes a mesh and do integrals
     # check: https://github.com/jareeger/Smooth_Closed_Surface_Quadrature_RBF-julia
-    
+
     if geometry isa String
         if geometry in ["wire", "cylinder"]
         elseif geometry in ["spheroid", "ellipsoid"]
@@ -456,7 +457,8 @@ function T_matrix(
     n̂_array;    
     use_Alok_vector_preallocation = true,
     verbose = false,
-    create_new_arrays = false
+    create_new_arrays = false,
+    HDF5_filename = nothing
 )   
     if create_new_arrays
         RgQ =       Q_matrix(n_max, k1,k2,k1r_array,k2r_array,r_array,θ_array,ϕ_array,n̂_array;kind = "regular"  ,use_Alok_vector_preallocation = true)
@@ -469,6 +471,11 @@ function T_matrix(
             * inv(Q_matrix(n_max, k1,k2,k1r_array,k2r_array,r_array,θ_array,ϕ_array,n̂_array;kind = "irregular",use_Alok_vector_preallocation = true))
         )
     end
+
+    if HDF5_filename != nothing
+        save_Tmatrix_to_HDF5_file(T, HDF5_filename)
+    end
+
     return T
 end
 
@@ -492,17 +499,25 @@ function get_max_single_index_from_n_max(n_max)
 end
 
 
-function calculate_Tmatrix_for_spheroid(rx,rz,n_max,k1,k2; n_θ_points=10, n_ϕ_points=20, use_Alok_vector_preallocation = true)
+function calculate_Tmatrix_for_spheroid(
+        rx,rz,n_max,k1,k2;
+        n_θ_points=10, n_ϕ_points=20, use_Alok_vector_preallocation = true, HDF5_filename = nothing)
     θ_1D_array = LinRange(1e-16, π, n_θ_points);
     ϕ_1D_array = LinRange(1e-16, 2π, n_ϕ_points);
     θ_array,ϕ_array = meshgrid(θ_1D_array,ϕ_1D_array);
     r_array,n̂_array = ellipsoid(rx, rz, θ_array; use_Alok_vector_preallocation=use_Alok_vector_preallocation);
     k1r_array = k1 .* r_array;
     k2r_array = k2 .* r_array;
-    T = T_matrix(n_max,k1,k2,k1r_array,k2r_array,r_array,θ_array,ϕ_array,n̂_array;    use_Alok_vector_preallocation = use_Alok_vector_preallocation)
+    T = T_matrix(n_max,k1,k2,k1r_array,k2r_array,r_array,θ_array,ϕ_array,n̂_array;    use_Alok_vector_preallocation = use_Alok_vector_preallocation, HDF5_filename=HDF5_filename)    
     return T
 end
 
+function save_Tmatrix_to_HDF5_file(T, HDF5_filename)
+    """
+    Save T-matrix to HDF5 file, with fields "Tmatrix_real" and "Tmatrix_imag"
+    """
+    h5write(HDF5_filename, "Tmatrix_real", real(T))
+    h5write(HDF5_filename, "Tmatrix_imag", imag(T))
 end
 
 """
