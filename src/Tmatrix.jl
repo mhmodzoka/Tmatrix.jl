@@ -51,6 +51,8 @@ end
  """
 function get_r_θ_ϕ_arrays(geometry; angular_resolution = 0.5)
     # TODO: use a package that takes a mesh and do integrals
+    # check: https://github.com/jareeger/Smooth_Closed_Surface_Quadrature_RBF-julia
+    
     if geometry isa String
         if geometry in ["wire", "cylinder"]
         elseif geometry in ["spheroid", "ellipsoid"]
