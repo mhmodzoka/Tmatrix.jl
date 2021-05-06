@@ -7,9 +7,11 @@ Equations and convention for vector spherical waves is following: Mishchenko, M.
 This is not a registered package yet. For now, you can install it by opening an interactive julia session, and type the following command:
 
 first, install VectorSphericalWaves.jl package:
+
 `using Pkg; Pkg.add(url="https://github.com/mhmodzoka/VectorSphericalWaves.jl")`
 
 Then, install Tmatrix.jl package:
+
 `using Pkg; Pkg.add(url="https://github.com/mhmodzoka/Tmatrix.jl")`
 
 
