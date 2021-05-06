@@ -365,8 +365,7 @@ function J_mn_m_n_(
             n̂_array;
             kind = kind,
             J_superscript = J_superscript,
-            use_Alok_vector_preallocation = use_Alok_vector_preallocation,
-            rotationally_symmetric = rotationally_symmetric
+            use_Alok_vector_preallocation = use_Alok_vector_preallocation,            
         )
     end
 
