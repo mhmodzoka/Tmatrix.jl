@@ -514,7 +514,7 @@ end
 
 function save_Tmatrix_to_HDF5_file(T, HDF5_filename)
     """
-    Save T-matrix to HDF5 file, with fields "Tmatrix_real" and "Tmatrix_imag"
+    Save T-matrix to HDF5 file, with fields "Tmatrix_real_CELES_convention" and "Tmatrix_imag_CELES_convention"
     """
     h5write(HDF5_filename, "Tmatrix_real_CELES_convention", real(T))
     h5write(HDF5_filename, "Tmatrix_imag_CELES_convention", imag(T))
