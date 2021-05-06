@@ -414,7 +414,7 @@ function Q_matrix(
     n̂_array;
     kind = "regular",    
     use_Alok_vector_preallocation = true,
-    verbose = false
+    verbose = false,
     rotationally_symmetric = false,
     symmetric_about_plan_perpendicular_z = false
 )
