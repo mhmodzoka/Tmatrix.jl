@@ -558,7 +558,6 @@ function get_max_single_index_from_n_max(n_max)
     return single_index_from_m_n(n_max,n_max)
 end
 
-
 function calculate_Tmatrix_for_spheroid(
         rx,rz,n_max,k1,k2;
         n_θ_points=10, n_ϕ_points=20, use_Alok_vector_preallocation = true, HDF5_filename = nothing,
