@@ -6,8 +6,8 @@ module Tmatrix
 
 #############################################################
 # import
-#include("VectorSphericalHarmonicsVectorized.jl")
-#import .VectorSphericalHarmonics
+# include("VectorSphericalHarmonicsVectorized.jl")
+# import .VectorSphericalHarmonics
 using VectorSphericalWaves
 using StaticArrays
 using EllipsisNotation
@@ -15,7 +15,7 @@ using LinearAlgebra
 using Trapz
 using HDF5
 
-#using HCubature # I may consider this package for numerical integrals
+# using HCubature # I may consider this package for numerical integrals
 
 export calculate_Tmatrix_for_spheroid
 #############################################################
@@ -35,7 +35,7 @@ export calculate_Tmatrix_for_spheroid
 
 #############################################################
 """
-Calculate dot product for two vectors.    
+    Calculate dot product for two vectors.    
 I made this function because the "dot" function in LinearAlgebra package doesn't work as expected for complex vectors.
 Parameters
 ==========
@@ -49,11 +49,11 @@ function vector_dot_product(A, B)
     return sum(A .* B)
 end
 
-""" calculate spherical coordinates arrays
-
- - this can be either 1D arrays for axi-symmetric particles or 2D arrays for general 3D particles
+"""
+    calculate spherical coordinates arrays
+ this can be either 1D arrays for axi-symmetric particles or 2D arrays for general 3D particles
  """
-function get_r_θ_ϕ_arrays(geometry; angular_resolution = 0.5)
+function get_r_θ_ϕ_arrays(geometry; angular_resolution=0.5)
     # TODO: use a package that takes a mesh and do integrals
     # check: https://github.com/jareeger/Smooth_Closed_Surface_Quadrature_RBF-julia
 
@@ -76,9 +76,9 @@ x_grid[dim1,dim2]
 dim1 corresponds to x index
 dim2 corresponds to y index
 """
-function meshgrid(x,y)    
-    x_grid = repeat(x , 1, length(y))
-    y_grid = repeat(y', length(x),1)
+function meshgrid(x, y)    
+    x_grid = repeat(x, 1, length(y))
+    y_grid = repeat(y', length(x), 1)
     return x_grid, y_grid
 end
 
@@ -99,17 +99,17 @@ function M_mn_wave_array(m, n, kr_array, θ_array, ϕ_array; kind="regular", use
     if use_Alok_vector_preallocation
         # Alok way is faster indeed!
         # TODO: @Alok, I think if we use boradcast it would be faster. I think avoiding preallocation makes the code cleaner and faster
-        M_mn_wave_array_ = (_-> zero(SVector{3,Complex})).(kr_array)
+        M_mn_wave_array_ = (_ -> zero(SVector{3,Complex})).(kr_array)
         for idx in eachindex(kr_array)
-            M_mn_wave_array_[idx] = M_mn_wave(m, n, kr_array[idx], θ_array[idx], ϕ_array[idx], kind = kind)
+            M_mn_wave_array_[idx] = M_mn_wave(m, n, kr_array[idx], θ_array[idx], ϕ_array[idx], kind=kind)
         end
 
     else
         # EllipsisNotation way
         M_mn_wave_array_ = zeros(Complex, append!(collect(size(kr_array)), 3)...)
-        #M_mn_wave_array_ = zeros(Complex, append!(collect(size(kr_array)), 3))
+        # M_mn_wave_array_ = zeros(Complex, append!(collect(size(kr_array)), 3))
         for idx in CartesianIndices(kr_array)
-            M_mn_wave_array_[idx,:] = M_mn_wave(m, n, kr_array[idx], θ_array[idx], ϕ_array[idx], kind = kind)
+            M_mn_wave_array_[idx,:] = M_mn_wave(m, n, kr_array[idx], θ_array[idx], ϕ_array[idx], kind=kind)
         end
     end
 
@@ -132,17 +132,17 @@ function N_mn_wave_array(m, n, kr_array, θ_array, ϕ_array; kind="regular", use
 
     if use_Alok_vector_preallocation
         # Alok way
-        N_mn_wave_array_ = (_-> zero(SVector{3,Complex})).(kr_array)
+        N_mn_wave_array_ = (_ -> zero(SVector{3,Complex})).(kr_array)
         for idx in eachindex(kr_array)
-            N_mn_wave_array_[idx] = N_mn_wave(m, n, kr_array[idx], θ_array[idx], ϕ_array[idx], kind = kind)
+            N_mn_wave_array_[idx] = N_mn_wave(m, n, kr_array[idx], θ_array[idx], ϕ_array[idx], kind=kind)
         end
 
     else
         # EllipsisNotation way
         N_mn_wave_array_ = zeros(Complex, append!(collect(size(kr_array)), 3)...)
-        #N_mn_wave_array_ = zeros(Complex, append!(collect(size(kr_array)), 3))
+        # N_mn_wave_array_ = zeros(Complex, append!(collect(size(kr_array)), 3))
         for idx in CartesianIndices(kr_array)
-            N_mn_wave_array_[idx,:] = N_mn_wave(m, n, kr_array[idx], θ_array[idx], ϕ_array[idx], kind = kind)
+            N_mn_wave_array_[idx,:] = N_mn_wave(m, n, kr_array[idx], θ_array[idx], ϕ_array[idx], kind=kind)
         end
     end
 
@@ -152,6 +152,23 @@ end
 
 #############################################################
 # calculate J and Rg J, from equations 5.184 and 5.190
+"""
+    Calculate the integrand of J (including dS=r²sin(θ)dθdϕ) from equations 5.184 and 5.190.
+It calculate all the integrand, and multiply it by r²sin(θ)
+
+Inputs
+======
+m, n, m_, n_ : int, order and rank of VSWF inside and outside the particle
+k1r_array, k2r_array : complex 2D array, product of wavevector and r, evaluated at points on the surface of the particle
+θ_array, ϕ_array : complex 2D array, spherical coordinates of points on the particle surface
+n̂_array : 3D array, unit vector normal to the surface of the particle
+kind : string, either ["regular" or "incoming"] or ["irregular" or "outgoing"]
+J_superscript : superscript at the top of J, it can be any of [11,12,21,22]
+
+Outputs
+=======
+J
+"""
 function J_mn_m_n__integrand(
     m,
     n,
@@ -163,27 +180,10 @@ function J_mn_m_n__integrand(
     θ_array,
     ϕ_array,
     n̂_array;
-    kind = "regular",
-    J_superscript = 11,
-    use_Alok_vector_preallocation = true
-)
-    """
-    Calculate the integrand of J (including dS=r²sin(θ)dθdϕ) from equations 5.184 and 5.190.
-    It calculate all the integrand, and multiply it by r²sin(θ)
-    
-    Inputs
-    ======
-    m, n, m_, n_ : int, order and rank of VSWF inside and outside the particle
-    k1r_array, k2r_array : complex 2D array, product of wavevector and r, evaluated at points on the surface of the particle
-    θ_array, ϕ_array : complex 2D array, spherical coordinates of points on the particle surface
-    n̂_array : 3D array, unit vector normal to the surface of the particle
-    kind : string, either ["regular" or "incoming"] or ["irregular" or "outgoing"]
-    J_superscript : superscript at the top of J, it can be any of [11,12,21,22]
-
-    Outputs
-    =======
-    J
-    """
+    kind="regular",
+    J_superscript=11,
+    use_Alok_vector_preallocation=true
+)    
 
     # calculate the integrand
     if J_superscript == 11 # TODO: this if-statement can be done more nicely. We separate J_superscript into two pieces, the number 1 represents M_mn_wave_array, while number 2 represents N_mn_wave_array        
@@ -214,8 +214,8 @@ function J_mn_m_n__integrand(
     if use_Alok_vector_preallocation
         # the cross product    
         cross_product_MN = cross.(
-            first_function( m_, n_, k2r_array, θ_array, ϕ_array, kind = kind_first_function, use_Alok_vector_preallocation=use_Alok_vector_preallocation),
-            second_function(-m, n , k1r_array, θ_array, ϕ_array, kind = kind_second_function, use_Alok_vector_preallocation=use_Alok_vector_preallocation)
+            first_function(m_, n_, k2r_array, θ_array, ϕ_array, kind=kind_first_function, use_Alok_vector_preallocation=use_Alok_vector_preallocation),
+            second_function(-m, n, k1r_array, θ_array, ϕ_array, kind=kind_second_function, use_Alok_vector_preallocation=use_Alok_vector_preallocation)
         )
 
         # dot multiplying the cross product by the unit vector, and multiplying by (-1)^m
@@ -223,13 +223,13 @@ function J_mn_m_n__integrand(
     else
         # the cross product  
         cross_product_MN = cross_product_on_last_dimension(
-            first_function( m_, n_, k2r_array, θ_array, ϕ_array, kind = kind_first_function, use_Alok_vector_preallocation=use_Alok_vector_preallocation),
-            second_function(-m, n , k1r_array, θ_array, ϕ_array, kind = kind_second_function, use_Alok_vector_preallocation=use_Alok_vector_preallocation)
+            first_function(m_, n_, k2r_array, θ_array, ϕ_array, kind=kind_first_function, use_Alok_vector_preallocation=use_Alok_vector_preallocation),
+            second_function(-m, n, k1r_array, θ_array, ϕ_array, kind=kind_second_function, use_Alok_vector_preallocation=use_Alok_vector_preallocation)
         )
         # dot multiplying the cross product by the unit vector, and multiplying by (-1)^m
-        cross_product_MN_dot_n̂ = zeros(Complex, size(cross_product_MN)[1:end-1])
+        cross_product_MN_dot_n̂ = zeros(Complex, size(cross_product_MN)[1:end - 1])
         '''
-        for idx in CartesianIndices(size(cross_product_MN)[1:end-1])        
+        for idx in CartesianIndices(size(cross_product_MN)[1:end - 1])        
             cross_product_MN_dot_n̂[idx] = (-1)^m * vector_dot_product(n̂_array[idx,:], cross_product_MN[idx,:])
         end
     end
@@ -244,23 +244,23 @@ function surface_integrand(integrand, r_array, θ_array)
 end
 
 #############################################################
-#angular_resolution = 0.05
-#θ_array = collect(1e-16:angular_resolution:π)
+# angular_resolution = 0.05
+# θ_array = collect(1e-16:angular_resolution:π)
 function ellipsoid(rx, rz, θ_array; use_Alok_vector_preallocation=true)
     """
     returns r and n̂ coordinate as a function of θ_array
     """
-    r = rx .* rz ./ sqrt.((rx .* cos.(θ_array)) .^ 2 + (rz .* sin.(θ_array)) .^ 2)
-    ∂r_by_∂θ = (rx .^ 2 - rz .^ 2) / (rx .^ 2 * rz .^ 2) .* r .^ 3 .* sin.(θ_array) .* cos.(θ_array)
+    r = rx .* rz ./ sqrt.((rx .* cos.(θ_array)).^2 + (rz .* sin.(θ_array)).^2)
+    ∂r_by_∂θ = (rx.^2 - rz.^2) / (rx.^2 * rz.^2) .* r.^3 .* sin.(θ_array) .* cos.(θ_array)
 
-    n̂_r_comp = r ./ sqrt.(r .^ 2 + ∂r_by_∂θ .^ 2)
-    n̂_θ_comp = -∂r_by_∂θ ./ sqrt.(r .^ 2 + ∂r_by_∂θ .^ 2)
+    n̂_r_comp = r ./ sqrt.(r.^2 + ∂r_by_∂θ.^2)
+    n̂_θ_comp = -∂r_by_∂θ ./ sqrt.(r.^2 + ∂r_by_∂θ.^2)
     n̂_ϕ_comp = zeros(Real, size(r))
 
     if use_Alok_vector_preallocation
         # TODO @Alok, is there an efficient way to do it?
         # this one is maybe 10x slower than the one in "else"
-        n̂ = (_-> zero(SVector{3,Real})).(r)
+        n̂ = (_ -> zero(SVector{3,Real})).(r)
         for idx in CartesianIndices(n̂)
             n̂[idx] = [
                 n̂_r_comp[idx],
@@ -334,10 +334,10 @@ function J_mn_m_n_(
     θ_array,
     ϕ_array,
     n̂_array;
-    kind = "regular",
-    J_superscript = 11,
-    use_Alok_vector_preallocation = true,
-    rotationally_symmetric = false,    
+    kind="regular",
+    J_superscript=11,
+    use_Alok_vector_preallocation=true,
+    rotationally_symmetric=false,    
 )
     if rotationally_symmetric
         # make sure that θ_array is 1D
@@ -363,9 +363,9 @@ function J_mn_m_n_(
             θ_array,
             ϕ_array,
             n̂_array;
-            kind = kind,
-            J_superscript = J_superscript,
-            use_Alok_vector_preallocation = use_Alok_vector_preallocation,            
+            kind=kind,
+            J_superscript=J_superscript,
+            use_Alok_vector_preallocation=use_Alok_vector_preallocation,            
         )
     end
 
@@ -406,20 +406,20 @@ function Q_mn_m_n_(
     θ_array,
     ϕ_array,
     n̂_array;
-    kind = "regular",
-    Q_superscript = 11,
-    use_Alok_vector_preallocation = true,
-    rotationally_symmetric = false,    
+    kind="regular",
+    Q_superscript=11,
+    use_Alok_vector_preallocation=true,
+    rotationally_symmetric=false,    
 )    
-    if     Q_superscript == 11; J_superscript_1 = 21 ; J_superscript_2 = 12
+    if Q_superscript == 11; J_superscript_1 = 21 ; J_superscript_2 = 12
     elseif Q_superscript == 12; J_superscript_1 = 11 ; J_superscript_2 = 22
     elseif Q_superscript == 21; J_superscript_1 = 22 ; J_superscript_2 = 11
     elseif Q_superscript == 22; J_superscript_1 = 12 ; J_superscript_2 = 21
     end    
 
     Q = (
-        -im .* k1 .* k2 .* J_mn_m_n_(m,n,m_,n_,k1r_array,k2r_array,r_array,θ_array,ϕ_array,n̂_array; kind = kind, J_superscript = J_superscript_1, use_Alok_vector_preallocation = use_Alok_vector_preallocation, rotationally_symmetric = rotationally_symmetric) 
-        -im .* k1.^2    .* J_mn_m_n_(m,n,m_,n_,k1r_array,k2r_array,r_array,θ_array,ϕ_array,n̂_array; kind = kind, J_superscript = J_superscript_2, use_Alok_vector_preallocation = use_Alok_vector_preallocation, rotationally_symmetric = rotationally_symmetric)
+        -im .* k1 .* k2 .* J_mn_m_n_(m, n, m_, n_, k1r_array, k2r_array, r_array, θ_array, ϕ_array, n̂_array; kind=kind, J_superscript=J_superscript_1, use_Alok_vector_preallocation=use_Alok_vector_preallocation, rotationally_symmetric=rotationally_symmetric) 
+        - im .* k1.^2    .* J_mn_m_n_(m, n, m_, n_, k1r_array, k2r_array, r_array, θ_array, ϕ_array, n̂_array; kind=kind, J_superscript=J_superscript_2, use_Alok_vector_preallocation=use_Alok_vector_preallocation, rotationally_symmetric=rotationally_symmetric)
     )
 
     return Q
@@ -435,17 +435,17 @@ function Q_matrix(
     θ_array,
     ϕ_array,
     n̂_array;
-    kind = "regular",    
-    use_Alok_vector_preallocation = true,
-    verbose = false,
-    rotationally_symmetric = false,
-    symmetric_about_plan_perpendicular_z = false
+    kind="regular",    
+    use_Alok_vector_preallocation=true,
+    verbose=false,
+    rotationally_symmetric=false,
+    symmetric_about_plan_perpendicular_z=false
 )
     idx_max = get_max_single_index_from_n_max(n_max)
-    Q_mn_m_n_11 = zeros(Complex, idx_max,idx_max)
-    Q_mn_m_n_12 = zeros(Complex, idx_max,idx_max)
-    Q_mn_m_n_21 = zeros(Complex, idx_max,idx_max)
-    Q_mn_m_n_22 = zeros(Complex, idx_max,idx_max)
+    Q_mn_m_n_11 = zeros(Complex, idx_max, idx_max)
+    Q_mn_m_n_12 = zeros(Complex, idx_max, idx_max)
+    Q_mn_m_n_21 = zeros(Complex, idx_max, idx_max)
+    Q_mn_m_n_22 = zeros(Complex, idx_max, idx_max)
 
     idx = 0;
     for n = 1:n_max
@@ -461,35 +461,35 @@ function Q_matrix(
                         if m == m_
                             if symmetric_about_plan_perpendicular_z
                                 # apply equations 5.208 and 5.209
-                                if iseven(n+n_)
-                                    Q_mn_m_n_11[idx, idx_] = Q_mn_m_n_(m,n,m_,n_,k1,k2,k1r_array,k2r_array,r_array,θ_array,ϕ_array,n̂_array;kind = kind,Q_superscript = 11,use_Alok_vector_preallocation = use_Alok_vector_preallocation, rotationally_symmetric = rotationally_symmetric)
-                                    Q_mn_m_n_22[idx, idx_] = Q_mn_m_n_(m,n,m_,n_,k1,k2,k1r_array,k2r_array,r_array,θ_array,ϕ_array,n̂_array;kind = kind,Q_superscript = 22,use_Alok_vector_preallocation = use_Alok_vector_preallocation, rotationally_symmetric = rotationally_symmetric)                        
+                                if iseven(n + n_)
+                                    Q_mn_m_n_11[idx, idx_] = Q_mn_m_n_(m, n, m_, n_, k1, k2, k1r_array, k2r_array, r_array, θ_array, ϕ_array, n̂_array;kind=kind,Q_superscript=11,use_Alok_vector_preallocation=use_Alok_vector_preallocation, rotationally_symmetric=rotationally_symmetric)
+                                    Q_mn_m_n_22[idx, idx_] = Q_mn_m_n_(m, n, m_, n_, k1, k2, k1r_array, k2r_array, r_array, θ_array, ϕ_array, n̂_array;kind=kind,Q_superscript=22,use_Alok_vector_preallocation=use_Alok_vector_preallocation, rotationally_symmetric=rotationally_symmetric)                        
                                 else
-                                    Q_mn_m_n_12[idx, idx_] = Q_mn_m_n_(m,n,m_,n_,k1,k2,k1r_array,k2r_array,r_array,θ_array,ϕ_array,n̂_array;kind = kind,Q_superscript = 12,use_Alok_vector_preallocation = use_Alok_vector_preallocation, rotationally_symmetric = rotationally_symmetric)
-                                    Q_mn_m_n_21[idx, idx_] = Q_mn_m_n_(m,n,m_,n_,k1,k2,k1r_array,k2r_array,r_array,θ_array,ϕ_array,n̂_array;kind = kind,Q_superscript = 21,use_Alok_vector_preallocation = use_Alok_vector_preallocation, rotationally_symmetric = rotationally_symmetric)
+                                    Q_mn_m_n_12[idx, idx_] = Q_mn_m_n_(m, n, m_, n_, k1, k2, k1r_array, k2r_array, r_array, θ_array, ϕ_array, n̂_array;kind=kind,Q_superscript=12,use_Alok_vector_preallocation=use_Alok_vector_preallocation, rotationally_symmetric=rotationally_symmetric)
+                                    Q_mn_m_n_21[idx, idx_] = Q_mn_m_n_(m, n, m_, n_, k1, k2, k1r_array, k2r_array, r_array, θ_array, ϕ_array, n̂_array;kind=kind,Q_superscript=21,use_Alok_vector_preallocation=use_Alok_vector_preallocation, rotationally_symmetric=rotationally_symmetric)
                                 end
                             else
-                                Q_mn_m_n_11[idx, idx_] = Q_mn_m_n_(m,n,m_,n_,k1,k2,k1r_array,k2r_array,r_array,θ_array,ϕ_array,n̂_array;kind = kind,Q_superscript = 11,use_Alok_vector_preallocation = use_Alok_vector_preallocation, rotationally_symmetric = rotationally_symmetric)
-                                Q_mn_m_n_12[idx, idx_] = Q_mn_m_n_(m,n,m_,n_,k1,k2,k1r_array,k2r_array,r_array,θ_array,ϕ_array,n̂_array;kind = kind,Q_superscript = 12,use_Alok_vector_preallocation = use_Alok_vector_preallocation, rotationally_symmetric = rotationally_symmetric)
-                                Q_mn_m_n_21[idx, idx_] = Q_mn_m_n_(m,n,m_,n_,k1,k2,k1r_array,k2r_array,r_array,θ_array,ϕ_array,n̂_array;kind = kind,Q_superscript = 21,use_Alok_vector_preallocation = use_Alok_vector_preallocation, rotationally_symmetric = rotationally_symmetric)
-                                Q_mn_m_n_22[idx, idx_] = Q_mn_m_n_(m,n,m_,n_,k1,k2,k1r_array,k2r_array,r_array,θ_array,ϕ_array,n̂_array;kind = kind,Q_superscript = 22,use_Alok_vector_preallocation = use_Alok_vector_preallocation, rotationally_symmetric = rotationally_symmetric) 
+                                Q_mn_m_n_11[idx, idx_] = Q_mn_m_n_(m, n, m_, n_, k1, k2, k1r_array, k2r_array, r_array, θ_array, ϕ_array, n̂_array;kind=kind,Q_superscript=11,use_Alok_vector_preallocation=use_Alok_vector_preallocation, rotationally_symmetric=rotationally_symmetric)
+                                Q_mn_m_n_12[idx, idx_] = Q_mn_m_n_(m, n, m_, n_, k1, k2, k1r_array, k2r_array, r_array, θ_array, ϕ_array, n̂_array;kind=kind,Q_superscript=12,use_Alok_vector_preallocation=use_Alok_vector_preallocation, rotationally_symmetric=rotationally_symmetric)
+                                Q_mn_m_n_21[idx, idx_] = Q_mn_m_n_(m, n, m_, n_, k1, k2, k1r_array, k2r_array, r_array, θ_array, ϕ_array, n̂_array;kind=kind,Q_superscript=21,use_Alok_vector_preallocation=use_Alok_vector_preallocation, rotationally_symmetric=rotationally_symmetric)
+                                Q_mn_m_n_22[idx, idx_] = Q_mn_m_n_(m, n, m_, n_, k1, k2, k1r_array, k2r_array, r_array, θ_array, ϕ_array, n̂_array;kind=kind,Q_superscript=22,use_Alok_vector_preallocation=use_Alok_vector_preallocation, rotationally_symmetric=rotationally_symmetric) 
                             end
                         end                        
                     else
                         if symmetric_about_plan_perpendicular_z && (m == m_)
                             # apply equations 5.208 and 5.209
-                            if iseven(n+n_)
-                                Q_mn_m_n_11[idx, idx_] = Q_mn_m_n_(m,n,m_,n_,k1,k2,k1r_array,k2r_array,r_array,θ_array,ϕ_array,n̂_array;kind = kind,Q_superscript = 11,use_Alok_vector_preallocation = use_Alok_vector_preallocation, rotationally_symmetric = rotationally_symmetric)
-                                Q_mn_m_n_22[idx, idx_] = Q_mn_m_n_(m,n,m_,n_,k1,k2,k1r_array,k2r_array,r_array,θ_array,ϕ_array,n̂_array;kind = kind,Q_superscript = 22,use_Alok_vector_preallocation = use_Alok_vector_preallocation, rotationally_symmetric = rotationally_symmetric)                        
+                            if iseven(n + n_)
+                                Q_mn_m_n_11[idx, idx_] = Q_mn_m_n_(m, n, m_, n_, k1, k2, k1r_array, k2r_array, r_array, θ_array, ϕ_array, n̂_array;kind=kind,Q_superscript=11,use_Alok_vector_preallocation=use_Alok_vector_preallocation, rotationally_symmetric=rotationally_symmetric)
+                                Q_mn_m_n_22[idx, idx_] = Q_mn_m_n_(m, n, m_, n_, k1, k2, k1r_array, k2r_array, r_array, θ_array, ϕ_array, n̂_array;kind=kind,Q_superscript=22,use_Alok_vector_preallocation=use_Alok_vector_preallocation, rotationally_symmetric=rotationally_symmetric)                        
                             else
-                                Q_mn_m_n_12[idx, idx_] = Q_mn_m_n_(m,n,m_,n_,k1,k2,k1r_array,k2r_array,r_array,θ_array,ϕ_array,n̂_array;kind = kind,Q_superscript = 12,use_Alok_vector_preallocation = use_Alok_vector_preallocation, rotationally_symmetric = rotationally_symmetric)
-                                Q_mn_m_n_21[idx, idx_] = Q_mn_m_n_(m,n,m_,n_,k1,k2,k1r_array,k2r_array,r_array,θ_array,ϕ_array,n̂_array;kind = kind,Q_superscript = 21,use_Alok_vector_preallocation = use_Alok_vector_preallocation, rotationally_symmetric = rotationally_symmetric)
+                                Q_mn_m_n_12[idx, idx_] = Q_mn_m_n_(m, n, m_, n_, k1, k2, k1r_array, k2r_array, r_array, θ_array, ϕ_array, n̂_array;kind=kind,Q_superscript=12,use_Alok_vector_preallocation=use_Alok_vector_preallocation, rotationally_symmetric=rotationally_symmetric)
+                                Q_mn_m_n_21[idx, idx_] = Q_mn_m_n_(m, n, m_, n_, k1, k2, k1r_array, k2r_array, r_array, θ_array, ϕ_array, n̂_array;kind=kind,Q_superscript=21,use_Alok_vector_preallocation=use_Alok_vector_preallocation, rotationally_symmetric=rotationally_symmetric)
                             end
                         else
-                            Q_mn_m_n_11[idx, idx_] = Q_mn_m_n_(m,n,m_,n_,k1,k2,k1r_array,k2r_array,r_array,θ_array,ϕ_array,n̂_array;kind = kind,Q_superscript = 11,use_Alok_vector_preallocation = use_Alok_vector_preallocation, rotationally_symmetric = rotationally_symmetric)
-                            Q_mn_m_n_12[idx, idx_] = Q_mn_m_n_(m,n,m_,n_,k1,k2,k1r_array,k2r_array,r_array,θ_array,ϕ_array,n̂_array;kind = kind,Q_superscript = 12,use_Alok_vector_preallocation = use_Alok_vector_preallocation, rotationally_symmetric = rotationally_symmetric)
-                            Q_mn_m_n_21[idx, idx_] = Q_mn_m_n_(m,n,m_,n_,k1,k2,k1r_array,k2r_array,r_array,θ_array,ϕ_array,n̂_array;kind = kind,Q_superscript = 21,use_Alok_vector_preallocation = use_Alok_vector_preallocation, rotationally_symmetric = rotationally_symmetric)
-                            Q_mn_m_n_22[idx, idx_] = Q_mn_m_n_(m,n,m_,n_,k1,k2,k1r_array,k2r_array,r_array,θ_array,ϕ_array,n̂_array;kind = kind,Q_superscript = 22,use_Alok_vector_preallocation = use_Alok_vector_preallocation, rotationally_symmetric = rotationally_symmetric)                    
+                            Q_mn_m_n_11[idx, idx_] = Q_mn_m_n_(m, n, m_, n_, k1, k2, k1r_array, k2r_array, r_array, θ_array, ϕ_array, n̂_array;kind=kind,Q_superscript=11,use_Alok_vector_preallocation=use_Alok_vector_preallocation, rotationally_symmetric=rotationally_symmetric)
+                            Q_mn_m_n_12[idx, idx_] = Q_mn_m_n_(m, n, m_, n_, k1, k2, k1r_array, k2r_array, r_array, θ_array, ϕ_array, n̂_array;kind=kind,Q_superscript=12,use_Alok_vector_preallocation=use_Alok_vector_preallocation, rotationally_symmetric=rotationally_symmetric)
+                            Q_mn_m_n_21[idx, idx_] = Q_mn_m_n_(m, n, m_, n_, k1, k2, k1r_array, k2r_array, r_array, θ_array, ϕ_array, n̂_array;kind=kind,Q_superscript=21,use_Alok_vector_preallocation=use_Alok_vector_preallocation, rotationally_symmetric=rotationally_symmetric)
+                            Q_mn_m_n_22[idx, idx_] = Q_mn_m_n_(m, n, m_, n_, k1, k2, k1r_array, k2r_array, r_array, θ_array, ϕ_array, n̂_array;kind=kind,Q_superscript=22,use_Alok_vector_preallocation=use_Alok_vector_preallocation, rotationally_symmetric=rotationally_symmetric)                    
                         end
                     end
                 end
@@ -513,22 +513,22 @@ function T_matrix(
     θ_array,
     ϕ_array,
     n̂_array;    
-    use_Alok_vector_preallocation = true,
-    verbose = false,
-    create_new_arrays = false,
-    HDF5_filename = nothing,
-    rotationally_symmetric = false,
-    symmetric_about_plan_perpendicular_z = false,
+    use_Alok_vector_preallocation=true,
+    verbose=false,
+    create_new_arrays=false,
+    HDF5_filename=nothing,
+    rotationally_symmetric=false,
+    symmetric_about_plan_perpendicular_z=false,
 )   
     if create_new_arrays
-        RgQ =       Q_matrix(n_max, k1,k2,k1r_array,k2r_array,r_array,θ_array,ϕ_array,n̂_array;kind = "regular"  ,use_Alok_vector_preallocation = true, rotationally_symmetric=rotationally_symmetric, symmetric_about_plan_perpendicular_z=symmetric_about_plan_perpendicular_z)
-        Q_inv = inv(Q_matrix(n_max, k1,k2,k1r_array,k2r_array,r_array,θ_array,ϕ_array,n̂_array;kind = "irregular",use_Alok_vector_preallocation = true, rotationally_symmetric=rotationally_symmetric, symmetric_about_plan_perpendicular_z=symmetric_about_plan_perpendicular_z))
+        RgQ =       Q_matrix(n_max, k1, k2, k1r_array, k2r_array, r_array, θ_array, ϕ_array, n̂_array;kind="regular"  ,use_Alok_vector_preallocation=true, rotationally_symmetric=rotationally_symmetric, symmetric_about_plan_perpendicular_z=symmetric_about_plan_perpendicular_z)
+        Q_inv = inv(Q_matrix(n_max, k1, k2, k1r_array, k2r_array, r_array, θ_array, ϕ_array, n̂_array;kind="irregular",use_Alok_vector_preallocation=true, rotationally_symmetric=rotationally_symmetric, symmetric_about_plan_perpendicular_z=symmetric_about_plan_perpendicular_z))
         T = -1 .* RgQ * Q_inv
     
     else
         T = (
-            -     Q_matrix(n_max, k1,k2,k1r_array,k2r_array,r_array,θ_array,ϕ_array,n̂_array;kind = "regular"  ,use_Alok_vector_preallocation = true, rotationally_symmetric=rotationally_symmetric, symmetric_about_plan_perpendicular_z=symmetric_about_plan_perpendicular_z)
-            * inv(Q_matrix(n_max, k1,k2,k1r_array,k2r_array,r_array,θ_array,ϕ_array,n̂_array;kind = "irregular",use_Alok_vector_preallocation = true, rotationally_symmetric=rotationally_symmetric, symmetric_about_plan_perpendicular_z=symmetric_about_plan_perpendicular_z))
+            -     Q_matrix(n_max, k1, k2, k1r_array, k2r_array, r_array, θ_array, ϕ_array, n̂_array;kind="regular"  ,use_Alok_vector_preallocation=true, rotationally_symmetric=rotationally_symmetric, symmetric_about_plan_perpendicular_z=symmetric_about_plan_perpendicular_z)
+            * inv(Q_matrix(n_max, k1, k2, k1r_array, k2r_array, r_array, θ_array, ϕ_array, n̂_array;kind="irregular",use_Alok_vector_preallocation=true, rotationally_symmetric=rotationally_symmetric, symmetric_about_plan_perpendicular_z=symmetric_about_plan_perpendicular_z))
         )
     end
 
@@ -550,34 +550,34 @@ for n = 1:n_max
     end
 end
 """
-function single_index_from_m_n(m,n)
-    return n*(n + 1) + m
+function single_index_from_m_n(m, n)
+    return n * (n + 1) + m
 end
 
 function get_max_single_index_from_n_max(n_max)
-    return single_index_from_m_n(n_max,n_max)
+    return single_index_from_m_n(n_max, n_max)
 end
 
 function calculate_Tmatrix_for_spheroid(
         rx,rz,n_max,k1,k2;
-        n_θ_points=10, n_ϕ_points=20, use_Alok_vector_preallocation = true, HDF5_filename = nothing,
-        rotationally_symmetric = false,
-        symmetric_about_plan_perpendicular_z = false,
+        n_θ_points=10, n_ϕ_points=20, use_Alok_vector_preallocation=true, HDF5_filename=nothing,
+        rotationally_symmetric=false,
+        symmetric_about_plan_perpendicular_z=false,
     )
     
     θ_1D_array = LinRange(1e-16, π, n_θ_points);
     ϕ_1D_array = LinRange(1e-16, 2π, n_ϕ_points);
     if rotationally_symmetric        
-        θ_array = θ_1D_array
+        θ_array = collect(θ_1D_array)
         ϕ_array = zeros(size(θ_array))
     else
         # eventually, this should be removed. I just keep it for sanity checks.
-        θ_array,ϕ_array = meshgrid(θ_1D_array,ϕ_1D_array);
+        θ_array, ϕ_array = meshgrid(θ_1D_array, ϕ_1D_array);
     end
-    r_array,n̂_array = ellipsoid(rx, rz, θ_array; use_Alok_vector_preallocation=use_Alok_vector_preallocation);
+    r_array, n̂_array = ellipsoid(rx, rz, θ_array; use_Alok_vector_preallocation=use_Alok_vector_preallocation);
     k1r_array = k1 .* r_array;
     k2r_array = k2 .* r_array;
-    T = T_matrix(n_max,k1,k2,k1r_array,k2r_array,r_array,θ_array,ϕ_array,n̂_array;    use_Alok_vector_preallocation = use_Alok_vector_preallocation, HDF5_filename=HDF5_filename, rotationally_symmetric=rotationally_symmetric, symmetric_about_plan_perpendicular_z=symmetric_about_plan_perpendicular_z)    
+    T = T_matrix(n_max, k1, k2, k1r_array, k2r_array, r_array, θ_array, ϕ_array, n̂_array;    use_Alok_vector_preallocation=use_Alok_vector_preallocation, HDF5_filename=HDF5_filename, rotationally_symmetric=rotationally_symmetric, symmetric_about_plan_perpendicular_z=symmetric_about_plan_perpendicular_z)    
     return T
 end
 
