@@ -18,4 +18,4 @@ The first three commands install prerequisites: ComplexOperations.jl and VectorS
 The last command installs Tmatrix.jl package.
 
 # How does it work?
-Refer to the writeup in `doc`
+Refer to the writeup in `docs`
