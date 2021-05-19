@@ -17,5 +17,5 @@ This is not a registered package yet. For now, you can install it by opening an 
 The first three commands install prerequisites: ComplexOperations.jl and VectorSphericalWaves.jl packages.
 The last command installs Tmatrix.jl package.
 
-
-
+# How does it work?
+Refer to the writeup in `doc`
