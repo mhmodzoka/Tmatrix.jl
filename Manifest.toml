@@ -6,12 +6,6 @@ git-tree-sha1 = "485ee0867925449198280d4af84bdb46a2a404d0"
 uuid = "621f4979-c628-5d54-868e-fcf4e3e8185c"
 version = "1.0.1"
 
-[[Adapt]]
-deps = ["LinearAlgebra"]
-git-tree-sha1 = "f1b523983a58802c4695851926203b36e28f09db"
-uuid = "79e6a3ab-5dfb-504d-930d-738a2a938a0e"
-version = "3.3.0"
-
 [[ArgTools]]
 uuid = "0dad84c5-d112-42e6-8d28-ef12dabb789f"
 
@@ -69,17 +63,9 @@ uuid = "e66e0078-7015-5450-92f7-15fbd957f2ae"
 
 [[ComplexOperations]]
 deps = ["LinearAlgebra"]
-git-tree-sha1 = "e5cd1d1c92a565d8a113e8eb59ec214f572ed3d0"
-repo-rev = "main"
-repo-url = "https://github.com/mhmodzoka/ComplexOperations.jl"
+git-tree-sha1 = "f69915b68a2fb7b5d0d41ff0584e6fa05a9853e5"
 uuid = "45c10c9a-3fea-40aa-8a0f-0e2f7025918e"
 version = "0.1.0"
-
-[[DataStructures]]
-deps = ["Compat", "InteractiveUtils", "OrderedCollections"]
-git-tree-sha1 = "4437b64df1e0adccc3e5d1adbc3ac741095e4677"
-uuid = "864edb3b-99cc-5e75-8d2d-829cb0a9cfe8"
-version = "0.18.9"
 
 [[Dates]]
 deps = ["Printf"]
@@ -121,12 +107,6 @@ git-tree-sha1 = "31939159aeb8ffad1d4d8ee44d07f8558273120a"
 uuid = "1a297f60-69ca-5386-bcde-b61e274b549b"
 version = "0.11.7"
 
-[[FiniteDifferences]]
-deps = ["ChainRulesCore", "LinearAlgebra", "Printf", "Random", "Richardson", "StaticArrays"]
-git-tree-sha1 = "b97a0b1adc3f10482d704158073cf3ac77493e2c"
-uuid = "26cc04aa-876d-5657-8c51-4c34ba976000"
-version = "0.12.6"
-
 [[ForwardDiff]]
 deps = ["CommonSubexpressions", "DiffResults", "DiffRules", "LinearAlgebra", "NaNMath", "Printf", "Random", "SpecialFunctions", "StaticArrays"]
 git-tree-sha1 = "e2af66012e08966366a43251e1fd421522908be6"
@@ -144,11 +124,6 @@ deps = ["Artifacts", "JLLWrappers", "LibCURL_jll", "Libdl", "OpenSSL_jll", "Pkg"
 git-tree-sha1 = "fd83fa0bde42e01952757f01149dd968c06c4dba"
 uuid = "0234f1f7-429e-5d53-9886-15a909be8d59"
 version = "1.12.0+1"
-
-[[HalfIntegers]]
-git-tree-sha1 = "d0b6bce900c194be44407526978feecf84df8a80"
-uuid = "f0d1745a-41c9-11e9-1dd9-e5d34d218721"
-version = "1.3.2"
 
 [[IRTools]]
 deps = ["InteractiveUtils", "MacroTools", "Test"]
@@ -231,12 +206,6 @@ version = "0.3.5"
 [[NetworkOptions]]
 uuid = "ca575930-c2e3-43a9-ace4-1e988b2c1908"
 
-[[OffsetArrays]]
-deps = ["Adapt"]
-git-tree-sha1 = "47b443d2ccc8297a4c538f55f8fd828ad58599ab"
-uuid = "6fe1bfb0-de20-5000-8ca7-80f57d26f881"
-version = "1.8.0"
-
 [[OpenSSL_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
 git-tree-sha1 = "71bbbc616a1d710879f5a1021bcba65ffba6ce58"
@@ -248,11 +217,6 @@ deps = ["Artifacts", "CompilerSupportLibraries_jll", "JLLWrappers", "Libdl", "Pk
 git-tree-sha1 = "b9b8b8ed236998f91143938a760c2112dceeb2b4"
 uuid = "efe28fd5-8261-553b-a9e1-b2916fc3738e"
 version = "0.5.4+0"
-
-[[OrderedCollections]]
-git-tree-sha1 = "85f8e6578bf1f9ee0d11e7bb1b1456435479d47c"
-uuid = "bac558e1-5e72-5ebc-8fee-abe8a469f55d"
-version = "1.4.1"
 
 [[Pkg]]
 deps = ["Artifacts", "Dates", "Downloads", "LibGit2", "Libdl", "Logging", "Markdown", "Printf", "REPL", "Random", "SHA", "Serialization", "TOML", "Tar", "UUIDs", "p7zip_jll"]
@@ -286,12 +250,6 @@ deps = ["UUIDs"]
 git-tree-sha1 = "4036a3bd08ac7e968e27c203d45f5fff15020621"
 uuid = "ae029012-a4dd-5104-9daa-d747884805df"
 version = "1.1.3"
-
-[[Richardson]]
-deps = ["LinearAlgebra"]
-git-tree-sha1 = "e03ca566bec93f8a3aeb059c8ef102f268a38949"
-uuid = "708f8203-808e-40c0-ba2d-98a6953ed40d"
-version = "1.4.0"
 
 [[SHA]]
 uuid = "ea8e919c-243c-51af-8825-aaa63cd721ce"
@@ -355,20 +313,6 @@ uuid = "cf7118a7-6976-5b1a-9a39-7adc72f591a4"
 
 [[Unicode]]
 uuid = "4ec0a83e-493e-50e2-b9ac-8f72acf5a8f5"
-
-[[VectorSphericalWaves]]
-deps = ["ChainRulesCore", "ComplexOperations", "DataStructures", "FiniteDifferences", "ForwardDiff", "SpecialFunctions", "StaticArrays", "WignerD"]
-git-tree-sha1 = "d9815694bd37f84fff46a716523e763a422ce9a5"
-repo-rev = "main"
-repo-url = "https://github.com/mhmodzoka/VectorSphericalWaves.jl"
-uuid = "bf4a7d2c-6958-4c00-8946-baf74e22a0dc"
-version = "0.1.0"
-
-[[WignerD]]
-deps = ["HalfIntegers", "LinearAlgebra", "OffsetArrays"]
-git-tree-sha1 = "dee2fbe9995f155a76f20ab2cfe3080fd5f3c8ba"
-uuid = "87c4ff3e-34df-11e9-37a7-516cea4e0402"
-version = "0.1.2"
 
 [[Zlib_jll]]
 deps = ["Libdl"]
