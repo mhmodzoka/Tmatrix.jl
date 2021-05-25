@@ -173,5 +173,3 @@ function trapz_ELZOUKA(x, y)
     return total_area
 end
 #######################
-
-
