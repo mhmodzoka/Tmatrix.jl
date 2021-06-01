@@ -7,6 +7,7 @@
 # 3- The functions I have wrote separating real and imaginary parts are slower, figure out why
 # 4- I need to get rid of Abstract Types, according to https://docs.julialang.org/en/v1/manual/performance-tips/ . For now, I am not sure how to make my code work with arbitrary float size
 # -- I have tried to use r_array::Array{Float64}, but got an error when r_array is ::Vector{Float64}
+# 5- Use StaticArrays when possible.
 
 # NOTE: Lessons learned:
 # 1- In order to be compatible with auto differentiation, all functions should return only one Array (no Tuples), which contains no nested arrays. This can be done by vcat(array...)
@@ -21,6 +22,7 @@ using VectorSphericalWaves
 using Trapz
 
 export calculate_Tmatrix_for_spheroid_SeparateRealImag
+
 """
     Separate real and imaginary parts. I assume that A is a hcat of real and imag parts
 """
@@ -253,6 +255,6 @@ function calculate_Tmatrix_for_spheroid_SeparateRealImag(
     θ_array = convert.(typeof(rx), θ_array)
     ϕ_array = convert.(typeof(rx), ϕ_array)
     r_array, n̂_array = ellipsoid(rx, rz, θ_array);    
-    T = T_matrix(n_max, k1_r, k1_i, k2_r, k2_i, r_array, θ_array, ϕ_array, n̂_array; HDF5_filename=HDF5_filename, rotationally_symmetric=rotationally_symmetric, symmetric_about_plan_perpendicular_z=symmetric_about_plan_perpendicular_z)    
+    T = T_matrix_SeparateRealImag(n_max, k1_r, k1_i, k2_r, k2_i, r_array, θ_array, ϕ_array, n̂_array, rotationally_symmetric, symmetric_about_plan_perpendicular_z)    
     return T
 end

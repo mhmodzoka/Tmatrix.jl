@@ -1,6 +1,9 @@
 # calculation of T-matrix using complex numbers.
 # the only drawback of this is that it is not compatible with automatic differentiation
 
+# TODO:
+# 1- Use StaticArrays when possible.
+
 export calculate_Tmatrix_for_spheroid
 
 include("utils.jl")
