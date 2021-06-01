@@ -452,6 +452,12 @@ uuid = "a63ad114-7e13-5084-954f-fe012c677804"
 [[MozillaCACerts_jll]]
 uuid = "14a3606d-f60d-562e-9121-12d972cd8159"
 
+[[MultiFloats]]
+deps = ["LinearAlgebra", "Printf", "Random"]
+git-tree-sha1 = "1f5e4175b819bc3f736cbaca21f778aa55e56f7b"
+uuid = "bdf0d083-296b-4888-a5b6-7498122e68a5"
+version = "1.0.2"
+
 [[NaNMath]]
 git-tree-sha1 = "bfe47e760d60b82b66b61d2d44128b62e3a369fb"
 uuid = "77ba4419-2d1f-58cd-9bb1-8ffee604a2e3"
@@ -524,6 +530,12 @@ deps = ["Cairo", "Colors", "FileIO", "FlameGraphs", "Graphics", "Gtk", "GtkReact
 git-tree-sha1 = "caa269e6f86900de232dffaf7e66edfe9414b007"
 uuid = "c46f51b8-102a-5cf2-8d2c-8597cb0e0da7"
 version = "0.6.9"
+
+[[Quadmath]]
+deps = ["Printf", "Random", "Requires"]
+git-tree-sha1 = "5a8f74af8eae654086a1d058b4ec94ff192e3de0"
+uuid = "be4d8f0f-7fa4-5f49-b795-2f01399ab2dd"
+version = "0.5.5"
 
 [[REPL]]
 deps = ["InteractiveUtils", "Markdown", "Sockets", "Unicode"]
@@ -632,8 +644,8 @@ uuid = "cf7118a7-6976-5b1a-9a39-7adc72f591a4"
 uuid = "4ec0a83e-493e-50e2-b9ac-8f72acf5a8f5"
 
 [[VectorSphericalWaves]]
-deps = ["ChainRulesCore", "ComplexOperations", "DataStructures", "FiniteDifferences", "ForwardDiff", "SpecialFunctions", "StaticArrays", "WignerD"]
-git-tree-sha1 = "c393db29af650b3fae9ee0c64f87d8555d2b9235"
+deps = ["ChainRulesCore", "ComplexOperations", "DataStructures", "FiniteDifferences", "ForwardDiff", "MultiFloats", "ProfileView", "Quadmath", "SpecialFunctions", "StaticArrays", "Traceur", "WignerD", "Zygote"]
+git-tree-sha1 = "fbf22c8926f7b7a1bf3b71bf3e28b884de25a325"
 repo-rev = "main"
 repo-url = "https://github.com/mhmodzoka/VectorSphericalWaves.jl"
 uuid = "bf4a7d2c-6958-4c00-8946-baf74e22a0dc"
