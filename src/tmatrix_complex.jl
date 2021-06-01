@@ -25,7 +25,10 @@ return
 ======
 M_mn_wave_array_ : M_mn_wave with shape same as any of kr_array, θ_array, ϕ_array, with an added dimension to represent the three components
 """
-function M_mn_wave_array(m, n, kr_array, θ_array, ϕ_array; kind="regular")    
+function M_mn_wave_array(
+        m::Int, n::Int, kr_array::AbstractVecOrMat{<:Complex{<:Real}}, θ_array::AbstractVecOrMat{R},
+        ϕ_array::AbstractVecOrMat{R}; kind="regular"
+    ) where {R <: Real}
     # Alok way is faster indeed!
     # TODO: @Alok, I think if we use boradcast it would be faster. I think avoiding preallocation makes the code cleaner and faster
     M_mn_wave_array_ = (_ -> zero(SVector{3,Complex})).(kr_array)
@@ -47,7 +50,10 @@ return
 ======
 N_mn_wave_array_ : N_mn_wave with shape same as any of kr_array, θ_array, ϕ_array, with an added dimension to represent the three components
 """ 
-function N_mn_wave_array(m, n, kr_array, θ_array, ϕ_array; kind="regular")       
+function N_mn_wave_array(
+        m::Int, n::Int, kr_array::AbstractVecOrMat{<:Complex{<:Real}}, θ_array::AbstractVecOrMat{R},
+        ϕ_array::AbstractVecOrMat{R}; kind="regular"
+    ) where {R <: Real}
     # Alok way
     N_mn_wave_array_ = (_ -> zero(SVector{3,Complex})).(kr_array)
     for idx in eachindex(kr_array)
@@ -76,11 +82,11 @@ Outputs
 J
 """
 function J_mn_m_n__integrand(
-    m::Int, n::Int, m_::Int, n_::Int,
-    k1r_array::AbstractVecOrMat{ComplexF64}, k2r_array::AbstractVecOrMat{ComplexF64},
-    r_array::AbstractVecOrMat{Float64}, θ_array::AbstractVecOrMat{Float64}, ϕ_array::AbstractVecOrMat{Float64}, n̂_array::Any; # TODO: I don't know why I get an error when I use n̂_array::AbstractVecOrMat{Vector{Float64}}
-    kind="regular", J_superscript=11
-)    
+        m::Int, n::Int, m_::Int, n_::Int,
+        k1r_array::AbstractVecOrMat{<:Complex{<:Real}}, k2r_array::AbstractVecOrMat{<:Complex{<:Real}},
+        r_array::AbstractVecOrMat{R}, θ_array::AbstractVecOrMat{R}, ϕ_array::AbstractVecOrMat{R}, n̂_array::Any; # TODO: I don't know why I get an error when I use n̂_array::AbstractVecOrMat{Vector{Float64}}
+        kind="regular", J_superscript=11
+    ) where {R <: Real}
 
     # determining the type of the first the second VSWF
     if J_superscript == 11 # TODO: this if-statement can be done more nicely. We separate J_superscript into two pieces, the number 1 represents M_mn_wave_array, while number 2 represents N_mn_wave_array        
@@ -125,17 +131,17 @@ function J_mn_m_n__integrand(
 end
 
 function J_mn_m_n_(
-    m::Int, n::Int, m_::Int, n_::Int,
-    k1r_array::AbstractVecOrMat{ComplexF64}, k2r_array::AbstractVecOrMat{ComplexF64},
-    r_array::AbstractVecOrMat{Float64}, θ_array::AbstractVecOrMat{Float64}, ϕ_array::AbstractVecOrMat{Float64}, n̂_array::Any; # TODO: I don't know why I get an error when I use n̂_array::AbstractVecOrMat{Vector{Float64}}
-    kind="regular", J_superscript=11, rotationally_symmetric=false,    
-)
+        m::Int, n::Int, m_::Int, n_::Int,
+        k1r_array::AbstractVecOrMat{<:Complex{<:Real}}, k2r_array::AbstractVecOrMat{<:Complex{<:Real}},
+        r_array::AbstractVecOrMat{R}, θ_array::AbstractVecOrMat{R}, ϕ_array::AbstractVecOrMat{R}, n̂_array::Any; # TODO: I don't know why I get an error when I use n̂_array::AbstractVecOrMat{Vector{Float64}}
+        kind="regular", J_superscript=11, rotationally_symmetric=false,    
+    ) where {R <: Real}
     if rotationally_symmetric
         # make sure that θ_array is 1D
         if length(size(θ_array)) != 1
             throw(DomainError("Since you have indicated << rotationally_symmetric = true >>, θ_array has to be 1D. Now it is $(length(size(θ_array)))D"))
         end
-        ϕ_array = zeros(size(θ_array))
+        ϕ_array = convert(typeof(θ_array), zeros(size(θ_array)))
     end
     
     # getting the integrand
@@ -167,12 +173,12 @@ end
 end
 
 function Q_mn_m_n_(
-    m::Int, n::Int, m_::Int, n_::Int,
-    k1::ComplexF64, k2::ComplexF64,
-    k1r_array::AbstractVecOrMat{ComplexF64}, k2r_array::AbstractVecOrMat{ComplexF64},
-    r_array::AbstractVecOrMat{Float64}, θ_array::AbstractVecOrMat{Float64}, ϕ_array::AbstractVecOrMat{Float64}, n̂_array::Any; # TODO: I don't know why I get an error when I use n̂_array::AbstractVecOrMat{Vector{Float64}}
-    kind="regular", Q_superscript=11, rotationally_symmetric=false,    
-)    
+        m::Int, n::Int, m_::Int, n_::Int,
+        k1::Complex{R}, k2::Complex{R},
+        k1r_array::AbstractVecOrMat{<:Complex{<:Real}}, k2r_array::AbstractVecOrMat{<:Complex{<:Real}},
+        r_array::AbstractVecOrMat{R}, θ_array::AbstractVecOrMat{R}, ϕ_array::AbstractVecOrMat{R}, n̂_array::Any; # TODO: I don't know why I get an error when I use n̂_array::AbstractVecOrMat{Vector{Float64}}
+        kind="regular", Q_superscript=11, rotationally_symmetric=false,    
+    )  where {R <: Real}
     if Q_superscript == 11; J_superscript_1 = 21 ; J_superscript_2 = 12
     elseif Q_superscript == 12; J_superscript_1 = 11 ; J_superscript_2 = 22
     elseif Q_superscript == 21; J_superscript_1 = 22 ; J_superscript_2 = 11
@@ -188,13 +194,13 @@ function Q_mn_m_n_(
 end
 
 function Q_matrix(
-    n_max::Int,
-    k1::ComplexF64, k2::ComplexF64,
-    k1r_array::AbstractVecOrMat{ComplexF64}, k2r_array::AbstractVecOrMat{ComplexF64},
-    r_array::AbstractVecOrMat{Float64}, θ_array::AbstractVecOrMat{Float64}, ϕ_array::AbstractVecOrMat{Float64}, n̂_array::Any; # TODO: I don't know why I get an error when I use n̂_array::AbstractVecOrMat{Vector{Float64}}
-    kind="regular", rotationally_symmetric=false, symmetric_about_plan_perpendicular_z=false,
-    verbose=false,
-)
+        n_max::Int,
+        k1::Complex{R}, k2::Complex{R},
+        k1r_array::AbstractVecOrMat{<:Complex{<:Real}}, k2r_array::AbstractVecOrMat{<:Complex{<:Real}},
+        r_array::AbstractVecOrMat{R}, θ_array::AbstractVecOrMat{R}, ϕ_array::AbstractVecOrMat{R}, n̂_array::Any; # TODO: I don't know why I get an error when I use n̂_array::AbstractVecOrMat{Vector{Float64}}
+        kind="regular", rotationally_symmetric=false, symmetric_about_plan_perpendicular_z=false,
+        verbose=false,
+    )  where {R <: Real}
     idx_max = get_max_single_index_from_n_max(n_max)
     Q_mn_m_n_11 = zeros(Complex, idx_max, idx_max)
     Q_mn_m_n_12 = zeros(Complex, idx_max, idx_max)
@@ -245,9 +251,9 @@ function Q_matrix(
                             Q_mn_m_n_21[idx, idx_] = Q_mn_m_n_(m, n, m_, n_, k1, k2, k1r_array, k2r_array, r_array, θ_array, ϕ_array, n̂_array;kind=kind,Q_superscript=21, rotationally_symmetric=rotationally_symmetric)
                             Q_mn_m_n_22[idx, idx_] = Q_mn_m_n_(m, n, m_, n_, k1, k2, k1r_array, k2r_array, r_array, θ_array, ϕ_array, n̂_array;kind=kind,Q_superscript=22, rotationally_symmetric=rotationally_symmetric)                    
                         end
-                    end
-                end
             end
+        end
+    end
         end
     end
     Q = vcat(
@@ -258,13 +264,14 @@ function Q_matrix(
 end
 
 function T_matrix(
-    n_max::Int,
-    k1::ComplexF64, k2::ComplexF64,
-    k1r_array::AbstractVecOrMat{ComplexF64}, k2r_array::AbstractVecOrMat{ComplexF64},
-    r_array::AbstractVecOrMat{Float64}, θ_array::AbstractVecOrMat{Float64}, ϕ_array::AbstractVecOrMat{Float64}, n̂_array::Any; # TODO: I don't know why I get an error when I use n̂_array::AbstractVecOrMat{Vector{Float64}}
-    rotationally_symmetric=false, symmetric_about_plan_perpendicular_z=false, HDF5_filename=nothing,      
-    verbose=false, create_new_arrays=false,
-)   
+        n_max::Int,
+        k1::Complex{R}, k2::Complex{R},
+        k1r_array::AbstractVecOrMat{<:Complex{<:Real}}, k2r_array::AbstractVecOrMat{<:Complex{<:Real}},
+        r_array::AbstractVecOrMat{R}, θ_array::AbstractVecOrMat{R}, ϕ_array::AbstractVecOrMat{R}, n̂_array::Any; # TODO: I don't know why I get an error when I use n̂_array::AbstractVecOrMat{Vector{Float64}}
+        rotationally_symmetric=false, symmetric_about_plan_perpendicular_z=false, HDF5_filename=nothing,      
+        verbose=false, create_new_arrays=false,
+    ) where {R <: Real}
+    
     if create_new_arrays
         RgQ =       Q_matrix(n_max, k1, k2, k1r_array, k2r_array, r_array, θ_array, ϕ_array, n̂_array;kind="regular"  , rotationally_symmetric=rotationally_symmetric, symmetric_about_plan_perpendicular_z=symmetric_about_plan_perpendicular_z, verbose=verbose)
         Q_inv = inv(Q_matrix(n_max, k1, k2, k1r_array, k2r_array, r_array, θ_array, ϕ_array, n̂_array;kind="irregular", rotationally_symmetric=rotationally_symmetric, symmetric_about_plan_perpendicular_z=symmetric_about_plan_perpendicular_z, verbose=verbose))
@@ -285,11 +292,12 @@ function T_matrix(
 end
 
 function calculate_Tmatrix_for_spheroid(
-        rx::Float64, rz::Float64, n_max::Int,
-        k1::Any, k2::Any;
+        rx::R, rz::R, n_max::Int,
+        k1::Complex{R}, k2::Complex{R};
         n_θ_points=10, n_ϕ_points=20, HDF5_filename=nothing,
         rotationally_symmetric=false, symmetric_about_plan_perpendicular_z=false,
-    )
+    ) where {R <: Real}
+
     k1 = complex(k1); k2 = complex(k2)
     θ_1D_array = LinRange(1e-16, π, n_θ_points);
     ϕ_1D_array = LinRange(1e-16, 2π, n_ϕ_points);
@@ -300,6 +308,8 @@ function calculate_Tmatrix_for_spheroid(
         # eventually, this should be removed. I just keep it for sanity checks.
         θ_array, ϕ_array = meshgrid(θ_1D_array, ϕ_1D_array);
     end
+    θ_array = convert.(typeof(rx), θ_array)
+    ϕ_array = convert.(typeof(rx), ϕ_array)
     r_array, n̂_array = ellipsoid(rx, rz, θ_array);
     k1r_array = k1 .* r_array;
     k2r_array = k2 .* r_array;

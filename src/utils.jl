@@ -41,14 +41,14 @@ for n = 1:n_max
 end
 `
 """
-function single_index_from_m_n(m, n)
+function single_index_from_m_n(m::Int, n::Int)
     return n * (n + 1) + m
 end
 
 """
     Get the maximum single index, given the maximum n.
 """
-function get_max_single_index_from_n_max(n_max)
+function get_max_single_index_from_n_max(n_max::Int)
     return single_index_from_m_n(n_max, n_max)
 end
 

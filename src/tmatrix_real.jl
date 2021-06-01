@@ -20,6 +20,7 @@ using LinearAlgebra
 using VectorSphericalWaves
 using Trapz
 
+export calculate_Tmatrix_for_spheroid_SeparateRealImag
 """
     Separate real and imaginary parts. I assume that A is a hcat of real and imag parts
 """
@@ -37,11 +38,11 @@ end
 
 
 function J_mn_m_n__integrand_SeparateRealImag(
-    m::Int, n::Int, m_::Int, n_::Int,
-    k1_r::Float64, k1_i::Float64, k2_r::Float64, k2_i::Float64,
-    r_array::AbstractVecOrMat{Float64}, θ_array::AbstractVecOrMat{Float64}, ϕ_array::AbstractVecOrMat{Float64}, n̂_array::Any,
-    kind::String, J_superscript::Int
-    )
+        m::Int, n::Int, m_::Int, n_::Int,
+        k1_r::R, k1_i::R, k2_r::R, k2_i::R,
+        r_array::AbstractVecOrMat{R}, θ_array::AbstractVecOrMat{R}, ϕ_array::AbstractVecOrMat{R}, n̂_array::Any,
+        kind::String, J_superscript::Int
+    ) where {R <: Real}
 
     # TODO: do you think I should have done these multiplication outside, rather than repeating them whenever the function is called? or Julia should eliminate these duplicate calculation?
     kr1_r = k1_r .* r_array
@@ -88,11 +89,12 @@ function J_mn_m_n__integrand_SeparateRealImag(
 end    
 
 function J_mn_m_n__SeparateRealImag(
-    m::Int, n::Int, m_::Int, n_::Int,
-    k1_r::Float64, k1_i::Float64, k2_r::Float64, k2_i::Float64,
-    r_array::AbstractVecOrMat{Float64}, θ_array::AbstractVecOrMat{Float64}, ϕ_array::AbstractVecOrMat{Float64}, n̂_array::Any, # TODO: I don't know why I get an error when I use n̂_array::AbstractVecOrMat{Vector{Float64}}
-    kind::String, J_superscript::Int, rotationally_symmetric::Bool,
-    )
+        m::Int, n::Int, m_::Int, n_::Int,
+        k1_r::R, k1_i::R, k2_r::R, k2_i::R,
+        r_array::AbstractVecOrMat{R}, θ_array::AbstractVecOrMat{R}, ϕ_array::AbstractVecOrMat{R}, n̂_array::Any, # TODO: I don't know why I get an error when I use n̂_array::AbstractVecOrMat{Vector{Float64}}
+        kind::String, J_superscript::Int, rotationally_symmetric::Bool,
+    ) where {R <: Real}
+
     if rotationally_symmetric
         # make sure that θ_array is 1D
         if length(size(θ_array)) != 1
@@ -139,11 +141,12 @@ end
 
 
 function Q_mn_m_n_SeparateRealImag(
-    m::Int, n::Int, m_::Int, n_::Int,
-    k1_r::Float64, k1_i::Float64, k2_r::Float64, k2_i::Float64,
-    r_array::AbstractVecOrMat{Float64}, θ_array::AbstractVecOrMat{Float64}, ϕ_array::AbstractVecOrMat{Float64}, n̂_array::Any, # TODO: how to define a multidimensional array type with Float64 elements?
-    kind::String, Q_superscript::Int, rotationally_symmetric::Bool, symmetric_about_plan_perpendicular_z::Bool,    
-)
+        m::Int, n::Int, m_::Int, n_::Int,
+        k1_r::R, k1_i::R, k2_r::R, k2_i::R,
+        r_array::AbstractVecOrMat{R}, θ_array::AbstractVecOrMat{R}, ϕ_array::AbstractVecOrMat{R}, n̂_array::Any, # TODO: how to define a multidimensional array type with Float64 elements?
+        kind::String, Q_superscript::Int, rotationally_symmetric::Bool, symmetric_about_plan_perpendicular_z::Bool,    
+    )  where {R <: Real}
+
     if Q_superscript == 11; J_superscript_1 = 21 ; J_superscript_2 = 12
     elseif Q_superscript == 12; J_superscript_1 = 11 ; J_superscript_2 = 22
     elseif Q_superscript == 21; J_superscript_1 = 22 ; J_superscript_2 = 11
@@ -184,10 +187,10 @@ end
 
 
 function Q_matrix_SeparateRealImag(
-    n_max::Int, k1_r::Float64, k1_i::Float64, k2_r::Float64, k2_i::Float64,
-    r_array::AbstractVecOrMat{Float64}, θ_array::AbstractVecOrMat{Float64}, ϕ_array::AbstractVecOrMat{Float64}, n̂_array::Any,
-    kind::String, rotationally_symmetric::Bool, symmetric_about_plan_perpendicular_z::Bool,
-)
+        n_max::Int, k1_r::R, k1_i::R, k2_r::R, k2_i::R,
+        r_array::AbstractVecOrMat{R}, θ_array::AbstractVecOrMat{R}, ϕ_array::AbstractVecOrMat{R}, n̂_array::Any,
+        kind::String, rotationally_symmetric::Bool, symmetric_about_plan_perpendicular_z::Bool,
+    ) where {R <: Real}
     
     m, n, m_, n_ = get_m_n_m__n__matrices_for_T_matrix(n_max)    
     Q_mn_m_n_11 = Q_mn_m_n_SeparateRealImag.(m, n, m_, n_, k1_r, k1_i, k2_r, k2_i, [r_array], [θ_array], [ϕ_array], [n̂_array], kind, 11, rotationally_symmetric, symmetric_about_plan_perpendicular_z)
@@ -210,10 +213,11 @@ function Q_matrix_SeparateRealImag(
 end
 
 function T_matrix_SeparateRealImag(
-    n_max::Int, k1_r::Float64, k1_i::Float64, k2_r::Float64, k2_i::Float64,
-    r_array::AbstractVecOrMat{Float64}, θ_array::AbstractVecOrMat{Float64}, ϕ_array::AbstractVecOrMat{Float64}, n̂_array::Any,
-    rotationally_symmetric, symmetric_about_plan_perpendicular_z
-)
+        n_max::Int, k1_r::R, k1_i::R, k2_r::R, k2_i::R,
+        r_array::AbstractVecOrMat{R}, θ_array::AbstractVecOrMat{R}, ϕ_array::AbstractVecOrMat{R}, n̂_array::Any,
+        rotationally_symmetric, symmetric_about_plan_perpendicular_z
+    ) where {R <: Real}
+
     RgQ = Q_matrix_SeparateRealImag(n_max, k1_r, k1_i, k2_r, k2_i, r_array, θ_array, ϕ_array, n̂_array, "regular", rotationally_symmetric, symmetric_about_plan_perpendicular_z)
     Q   = Q_matrix_SeparateRealImag(n_max, k1_r, k1_i, k2_r, k2_i, r_array, θ_array, ϕ_array, n̂_array, "irregular", rotationally_symmetric, symmetric_about_plan_perpendicular_z)
     
@@ -228,4 +232,27 @@ function T_matrix_SeparateRealImag(
     invQ = complex_matrix_inversion(Q_r, Q_i)
     T = -1 .* complex_matrix_multiplication(RgQ_r, RgQ_i, invQ[1], invQ[2])
     return hcat(T[1], T[2])    
+end
+
+function calculate_Tmatrix_for_spheroid_SeparateRealImag(
+        rx::R, rz::R, n_max::Int,
+        k1_r::R, k1_i::R, k2_r::R, k2_i::R,
+        n_θ_points=10, n_ϕ_points=20, HDF5_filename=nothing,
+        rotationally_symmetric=false, symmetric_about_plan_perpendicular_z=false,
+    ) where {R <: Real}
+    
+    θ_1D_array = LinRange(1e-16, π, n_θ_points);
+    ϕ_1D_array = LinRange(1e-16, 2π, n_ϕ_points);
+    if rotationally_symmetric        
+        θ_array = collect(θ_1D_array)
+        ϕ_array = zeros(size(θ_array))
+    else
+        # eventually, this should be removed. I just keep it for sanity checks.
+        θ_array, ϕ_array = meshgrid(θ_1D_array, ϕ_1D_array);
+    end
+    θ_array = convert.(typeof(rx), θ_array)
+    ϕ_array = convert.(typeof(rx), ϕ_array)
+    r_array, n̂_array = ellipsoid(rx, rz, θ_array);    
+    T = T_matrix(n_max, k1_r, k1_i, k2_r, k2_i, r_array, θ_array, ϕ_array, n̂_array; HDF5_filename=HDF5_filename, rotationally_symmetric=rotationally_symmetric, symmetric_about_plan_perpendicular_z=symmetric_about_plan_perpendicular_z)    
+    return T
 end

@@ -1,14 +1,19 @@
 using Tmatrix
 
+# inputs
 rx, rz = 1e-6, 1.3e-6
 n_max = 3
-k1 = 1e7
-k2 = 1.5e7 + 1e3 * im
+k1_r = 1e7; k1_i = 0.0
+k2_r = 1.5e7; k2_i = 1e3
 
-@time T = calculate_Tmatrix_for_spheroid(rx, rz, n_max, k1, k2)
+# Using Complex numbers
+@time T = calculate_Tmatrix_for_spheroid(rx, rz, n_max, Complex(k1_r, k1_i), Complex(k2_r, k2_i))
 
-rx, rz = BigFloat(1e-6), BigFloat(1.3e-6)
-n_max = 3
-k1 = BigFloat(1e7) + 0*im
-k2 = BigFloat(1.5e7) + BigFloat(1e3) * im
-@time T = calculate_Tmatrix_for_spheroid(rx, rz, n_max, k1, k2)
+# Using Complex numbers - BigFloat
+@time T = calculate_Tmatrix_for_spheroid(BigFloat(rx), BigFloat(rz), n_max, Complex(BigFloat(k1_r), BigFloat(k1_i)), Complex(BigFloat(k2_r), BigFloat(k2_i)), rotationally_symmetric=true)
+
+# Using Real numbers
+@time T = Tmatrix.calculate_Tmatrix_for_spheroid_SeparateRealImag(rx, rz, n_max, k1_r, k1_i, k2_r, k2_i)
+
+# Using Real numbers - Big Float
+@time T = Tmatrix.calculate_Tmatrix_for_spheroid_SeparateRealImag(BigFloat(rx), BigFloat(rz), n_max, BigFloat(k1_r), BigFloat(k1_i), BigFloat(k2_r), BigFloat(k2_i))
