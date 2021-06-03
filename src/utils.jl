@@ -29,6 +29,21 @@ function meshgrid(x, y)
 end
 
 """
+    Create meshgrid of θ and ϕ
+"""
+function meshgrid_θ_ϕ(n_θ_points, n_ϕ_points; min_θ=1e-16, min_ϕ=1e-16, rotationally_symmetric=false)
+    θ_1D_array = LinRange(min_θ, π, n_θ_points);
+    ϕ_1D_array = LinRange(min_ϕ, 2π, n_ϕ_points);
+    if rotationally_symmetric
+        θ_array = collect(θ_1D_array)
+        ϕ_array = zeros(size(θ_array))
+    else        
+        θ_array, ϕ_array = meshgrid(θ_1D_array, ϕ_1D_array);
+    end
+    return θ_array, ϕ_array
+end
+
+"""
 Create a single index from m and n
 We fill the index like this:
 `
@@ -55,7 +70,36 @@ end
 """
     Multiply the integrand by the `dS` element, which equals r²sin(θ)
 """
-function surface_integrand(integrand, r_array, θ_array)
+function surface_integrand(
+        integrand::AbstractVecOrMat{C}, r_array::AbstractVecOrMat{R}, θ_array::AbstractVecOrMat{R}
+    ) where {R <: Real, C <: Complex{R}} 
+    return integrand .* r_array.^2 .* sin.(θ_array)
+end
+
+"""
+    Multiply the integrand by the `dS` element, which equals r²sin(θ)
+"""
+function surface_integrand(
+        integrand::AbstractVecOrMat{R}, r_array::AbstractVecOrMat{R}, θ_array::AbstractVecOrMat{R}
+    ) where {R <: Real, C <: Complex{R}} 
+    return integrand .* r_array.^2 .* sin.(θ_array)
+end
+
+"""
+    Multiply the integrand by the `dS` element, which equals r²sin(θ)
+"""
+function surface_integrand(
+        integrand::AbstractVecOrMat{Matrix{C}}, r_array::AbstractVecOrMat{R}, θ_array::AbstractVecOrMat{R}
+    ) where {R <: Real, C <: Complex{R}} 
+    return integrand .* r_array.^2 .* sin.(θ_array)
+end
+
+"""
+    Multiply the integrand by the `dS` element, which equals r²sin(θ)
+"""
+function surface_integrand(
+        integrand::AbstractVecOrMat{Matrix{R}}, r_array::AbstractVecOrMat{R}, θ_array::AbstractVecOrMat{R}
+    ) where {R <: Real, C <: Complex{R}} 
     return integrand .* r_array.^2 .* sin.(θ_array)
 end
 
@@ -161,15 +205,24 @@ end
 #######################
 # TOBE moved to a new package for trapezoidal integraion, that will be compatible with autodiff
 """
-    numerical integral using trapezoidal rule
+    1D numerical integral using trapezoidal rule
 x and y are 1D arrays
 """
-function trapz_ELZOUKA(x, y)
+function trapz_ELZOUKA(x::AbstractVector{R}, y::AbstractVector{N}) where {R <: Real, N <: Number}
     # TODO: small error if compared with Trapz.trapz
     base = x[2:end] - x[1:end - 1]
     av_height = (y[2:end] + y[1:end - 1]) / 2
     areas = base .* av_height
     total_area = sum(areas)
     return total_area
+end
+
+"""
+    2D numerical integral using trapezoidal rule
+x and y are 1D arrays, z is 2D array
+"""
+function trapz_ELZOUKA(x::AbstractVector{R}, y::AbstractVector{R}, z::AbstractMatrix{N}) where {R <: Real, N <: Number}
+    integrand_wrt_x = trapz_ELZOUKA.(eachcol(repeat(x,1,size(z,2))), eachcol(z))
+    return trapz_ELZOUKA(y, integrand_wrt_x)
 end
 #######################

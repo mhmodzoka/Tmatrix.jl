@@ -87,7 +87,9 @@ function J_mn_m_n__integrand_SeparateRealImag(
 
     J_integrand = Tmatrix.surface_integrand(cross_product_MN_dot_n̂, r_array, θ_array)
 
-    return vcat(J_integrand...) # I had to flatten all nested arrays.
+    # This line used to have trouble
+    # return vcat(J_integrand...) # I had to flatten all nested arrays.
+    return hcat([i[1] for i in J_integrand], [i[2] for i in J_integrand])
 end    
 
 function J_mn_m_n__SeparateRealImag(
@@ -102,14 +104,14 @@ function J_mn_m_n__SeparateRealImag(
         if length(size(θ_array)) != 1
             throw(DomainError("Since you have indicated << rotationally_symmetric = true >>, θ_array has to be 1D. Now it is $(length(size(θ_array)))D"))
         end
-        ϕ_array = zeros(size(θ_array))
+        ϕ_array = zeros(typeof(θ_array[1]), size(θ_array))
     end
     
     if rotationally_symmetric && (m != m_)
         # the integral over ϕ is 2π * δ_m_m_, so it is zero if m != m_
         J_integrand_dS_r = zeros(size(θ_array))
         J_integrand_dS_i = zeros(size(θ_array))
-        return hcat(0, 0)
+        return hcat(typeof(θ_array[1]), typeof(θ_array[1]))
     
     else
         J_integrand_dS = J_mn_m_n__integrand_SeparateRealImag(
@@ -118,24 +120,30 @@ function J_mn_m_n__SeparateRealImag(
             r_array, θ_array, ϕ_array, n̂_array,
             kind, J_superscript,            
         )
+        ## next three lines don't work
         # because J_mn_m_n__integrand_SeparateRealImag returns a flattened J, I have to reshape it to make it work for trapz
-        J_integrand_dS_r = reshape(J_integrand_dS[:,1], size(θ_array))
-        J_integrand_dS_i = reshape(J_integrand_dS[:,2], size(θ_array))
+        J_integrand_dS_r = reshape(J_integrand_dS[:,1:Int(end/2)], size(θ_array))
+        J_integrand_dS_i = reshape(J_integrand_dS[:,Int(end/2+1):end], size(θ_array))
     end
     
     # surface integral
     if rotationally_symmetric
         # integrate over θ only        
-        J_r = 2π * trapz_ELZOUKA((θ_array), J_integrand_dS_r)
-        J_i = 2π * trapz_ELZOUKA((θ_array), J_integrand_dS_i)
+        J_r = 2π * trapz_ELZOUKA(θ_array, J_integrand_dS_r)
+        J_i = 2π * trapz_ELZOUKA(θ_array, J_integrand_dS_i)
+    
     else
         # integrate over θ and ϕ
         # TODO: replace this integral with surface mesh quadrature, like this one: https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5095443/ , https://github.com/jareeger/Smooth_Closed_Surface_Quadrature_RBF-julia
         # assuming that θ_array, ϕ_array were created with meshgrid function
 
         # TODO: I need to define trapz_ELZOUKA for 2D integrals. Otherwise, autodiff will not work.
-        J_r = trapz((θ_array[:,1], ϕ_array[1,:]), J_integrand_dS_r)
-        J_i = trapz((θ_array[:,1], ϕ_array[1,:]), J_integrand_dS_i)
+        #J_r = trapz((θ_array[:,1], ϕ_array[1,:]), J_integrand_dS_r)
+        #J_i = trapz((θ_array[:,1], ϕ_array[1,:]), J_integrand_dS_i)
+
+        # using the custom function trapz_ELZOUKA
+        J_r = trapz_ELZOUKA(θ_array[:,1], ϕ_array[1,:], J_integrand_dS_r)
+        J_i = trapz_ELZOUKA(θ_array[:,1], ϕ_array[1,:], J_integrand_dS_i)
     end
 
     return hcat(J_r, J_i)    
@@ -146,7 +154,7 @@ function Q_mn_m_n_SeparateRealImag(
         m::Int, n::Int, m_::Int, n_::Int,
         k1_r::R, k1_i::R, k2_r::R, k2_i::R,
         r_array::AbstractVecOrMat{R}, θ_array::AbstractVecOrMat{R}, ϕ_array::AbstractVecOrMat{R}, n̂_array::Any, # TODO: how to define a multidimensional array type with Float64 elements?
-        kind::String, Q_superscript::Int, rotationally_symmetric::Bool, symmetric_about_plan_perpendicular_z::Bool,    
+        kind::String, Q_superscript::Int, rotationally_symmetric::Bool, symmetric_about_plane_perpendicular_z::Bool,    
     )  where {R <: Real}
 
     if Q_superscript == 11; J_superscript_1 = 21 ; J_superscript_2 = 12
@@ -156,13 +164,13 @@ function Q_mn_m_n_SeparateRealImag(
     end
     
     if rotationally_symmetric && (m != m_)
-        return hcat(0, 0)
+        return hcat(zero(θ_array[1]), zero(θ_array[1])) # TODO: find a better way to get the type of array elements
 
     # TODO: adding these lines causes Zygote to fail. Why? The code can work without them.
-    # elseif rotationally_symmetric && symmetric_about_plan_perpendicular_z && (m == m_) && (Q_superscript == 11 || Q_superscript == 22) && ! iseven(n + n_)
+    # elseif rotationally_symmetric && symmetric_about_plane_perpendicular_z && (m == m_) && (Q_superscript == 11 || Q_superscript == 22) && ! iseven(n + n_)
     #    return hcat(0, 0)
 
-    # elseif rotationally_symmetric && symmetric_about_plan_perpendicular_z && (m == m_) && (Q_superscript == 12 || Q_superscript == 21) && ! isodd(n + n_)
+    # elseif rotationally_symmetric && symmetric_about_plane_perpendicular_z && (m == m_) && (Q_superscript == 12 || Q_superscript == 21) && ! isodd(n + n_)
     #    return hcat(0, 0)    
     
     else
@@ -191,14 +199,14 @@ end
 function Q_matrix_SeparateRealImag(
         n_max::Int, k1_r::R, k1_i::R, k2_r::R, k2_i::R,
         r_array::AbstractVecOrMat{R}, θ_array::AbstractVecOrMat{R}, ϕ_array::AbstractVecOrMat{R}, n̂_array::Any,
-        kind::String, rotationally_symmetric::Bool, symmetric_about_plan_perpendicular_z::Bool,
+        kind::String, rotationally_symmetric::Bool, symmetric_about_plane_perpendicular_z::Bool,
     ) where {R <: Real}
     
     m, n, m_, n_ = get_m_n_m__n__matrices_for_T_matrix(n_max)    
-    Q_mn_m_n_11 = Q_mn_m_n_SeparateRealImag.(m, n, m_, n_, k1_r, k1_i, k2_r, k2_i, [r_array], [θ_array], [ϕ_array], [n̂_array], kind, 11, rotationally_symmetric, symmetric_about_plan_perpendicular_z)
-    Q_mn_m_n_12 = Q_mn_m_n_SeparateRealImag.(m, n, m_, n_, k1_r, k1_i, k2_r, k2_i, [r_array], [θ_array], [ϕ_array], [n̂_array], kind, 12, rotationally_symmetric, symmetric_about_plan_perpendicular_z)
-    Q_mn_m_n_21 = Q_mn_m_n_SeparateRealImag.(m, n, m_, n_, k1_r, k1_i, k2_r, k2_i, [r_array], [θ_array], [ϕ_array], [n̂_array], kind, 21, rotationally_symmetric, symmetric_about_plan_perpendicular_z)
-    Q_mn_m_n_22 = Q_mn_m_n_SeparateRealImag.(m, n, m_, n_, k1_r, k1_i, k2_r, k2_i, [r_array], [θ_array], [ϕ_array], [n̂_array], kind, 22, rotationally_symmetric, symmetric_about_plan_perpendicular_z)
+    Q_mn_m_n_11 = Q_mn_m_n_SeparateRealImag.(m, n, m_, n_, k1_r, k1_i, k2_r, k2_i, [r_array], [θ_array], [ϕ_array], [n̂_array], kind, 11, rotationally_symmetric, symmetric_about_plane_perpendicular_z)
+    Q_mn_m_n_12 = Q_mn_m_n_SeparateRealImag.(m, n, m_, n_, k1_r, k1_i, k2_r, k2_i, [r_array], [θ_array], [ϕ_array], [n̂_array], kind, 12, rotationally_symmetric, symmetric_about_plane_perpendicular_z)
+    Q_mn_m_n_21 = Q_mn_m_n_SeparateRealImag.(m, n, m_, n_, k1_r, k1_i, k2_r, k2_i, [r_array], [θ_array], [ϕ_array], [n̂_array], kind, 21, rotationally_symmetric, symmetric_about_plane_perpendicular_z)
+    Q_mn_m_n_22 = Q_mn_m_n_SeparateRealImag.(m, n, m_, n_, k1_r, k1_i, k2_r, k2_i, [r_array], [θ_array], [ϕ_array], [n̂_array], kind, 22, rotationally_symmetric, symmetric_about_plane_perpendicular_z)
 
     Q = vcat(
         (hcat(Q_mn_m_n_11, Q_mn_m_n_12)),
@@ -217,11 +225,11 @@ end
 function T_matrix_SeparateRealImag(
         n_max::Int, k1_r::R, k1_i::R, k2_r::R, k2_i::R,
         r_array::AbstractVecOrMat{R}, θ_array::AbstractVecOrMat{R}, ϕ_array::AbstractVecOrMat{R}, n̂_array::Any,
-        rotationally_symmetric, symmetric_about_plan_perpendicular_z
+        rotationally_symmetric, symmetric_about_plane_perpendicular_z
     ) where {R <: Real}
 
-    RgQ = Q_matrix_SeparateRealImag(n_max, k1_r, k1_i, k2_r, k2_i, r_array, θ_array, ϕ_array, n̂_array, "regular", rotationally_symmetric, symmetric_about_plan_perpendicular_z)
-    Q   = Q_matrix_SeparateRealImag(n_max, k1_r, k1_i, k2_r, k2_i, r_array, θ_array, ϕ_array, n̂_array, "irregular", rotationally_symmetric, symmetric_about_plan_perpendicular_z)
+    RgQ = Q_matrix_SeparateRealImag(n_max, k1_r, k1_i, k2_r, k2_i, r_array, θ_array, ϕ_array, n̂_array, "regular", rotationally_symmetric, symmetric_about_plane_perpendicular_z)
+    Q   = Q_matrix_SeparateRealImag(n_max, k1_r, k1_i, k2_r, k2_i, r_array, θ_array, ϕ_array, n̂_array, "irregular", rotationally_symmetric, symmetric_about_plane_perpendicular_z)
     
     Q = Float64.(Q) # TODO: I need to make the concrete type programmable, in case I need Float128
     RgQ = Float64.(RgQ) # TODO: I need to make the concrete type programmable, in case I need Float128
@@ -236,25 +244,49 @@ function T_matrix_SeparateRealImag(
     return hcat(T[1], T[2])    
 end
 
+"""
+    allowing BigFloat_precision
+"""
+function T_matrix_SeparateRealImag(
+        n_max::Int, k1_r::R, k1_i::R, k2_r::R, k2_i::R,
+        r_array::AbstractVecOrMat{R}, θ_array::AbstractVecOrMat{R}, ϕ_array::AbstractVecOrMat{R}, n̂_array::Any,
+        rotationally_symmetric, symmetric_about_plane_perpendicular_z, BigFloat_precision
+    ) where {R <: Real}
+    if BigFloat_precision != nothing
+        return setprecision(BigFloat_precision) do
+            return T_matrix_SeparateRealImag(
+                n_max, big(k1_r), big(k1_i), big(k2_r), big(k2_i),
+                big.(r_array), big.(θ_array), big.(ϕ_array), [big.(n) for n in n̂_array],
+                rotationally_symmetric, symmetric_about_plane_perpendicular_z
+            )            
+        end
+       
+    else
+        return T_matrix_SeparateRealImag(
+            n_max, k1_r, k1_i, k2_r, k2_i,
+            r_array, θ_array, ϕ_array, n̂_array,
+            rotationally_symmetric, symmetric_about_plane_perpendicular_z
+        )
+    end
+end
+
 function calculate_Tmatrix_for_spheroid_SeparateRealImag(
         rx::R, rz::R, n_max::Int,
-        k1_r::R, k1_i::R, k2_r::R, k2_i::R,
+        k1_r::R, k1_i::R, k2_r::R, k2_i::R;
         n_θ_points=10, n_ϕ_points=20, HDF5_filename=nothing,
-        rotationally_symmetric=false, symmetric_about_plan_perpendicular_z=false,
+        rotationally_symmetric = false, symmetric_about_plane_perpendicular_z=false,
+        BigFloat_precision = nothing
     ) where {R <: Real}
     
-    θ_1D_array = LinRange(1e-16, π, n_θ_points);
-    ϕ_1D_array = LinRange(1e-16, 2π, n_ϕ_points);
-    if rotationally_symmetric        
-        θ_array = collect(θ_1D_array)
-        ϕ_array = zeros(size(θ_array))
-    else
-        # eventually, this should be removed. I just keep it for sanity checks.
-        θ_array, ϕ_array = meshgrid(θ_1D_array, ϕ_1D_array);
-    end
-    θ_array = convert.(typeof(rx), θ_array)
-    ϕ_array = convert.(typeof(rx), ϕ_array)
-    r_array, n̂_array = ellipsoid(rx, rz, θ_array);    
-    T = T_matrix_SeparateRealImag(n_max, k1_r, k1_i, k2_r, k2_i, r_array, θ_array, ϕ_array, n̂_array, rotationally_symmetric, symmetric_about_plan_perpendicular_z)    
+    # create a grid of θ_ϕ
+    θ_array, ϕ_array = meshgrid_θ_ϕ(n_θ_points, n_ϕ_points; min_θ=1e-16, min_ϕ=1e-16, rotationally_symmetric=rotationally_symmetric)    
+    
+    # calculate r and n̂ for the geometry
+    r_array, n̂_array = ellipsoid(rx, rz, θ_array);
+    
+    # calculate T-matrix
+    T = T_matrix_SeparateRealImag(
+        n_max, k1_r, k1_i, k2_r, k2_i, r_array, θ_array, ϕ_array, n̂_array,
+        rotationally_symmetric, symmetric_about_plane_perpendicular_z, BigFloat_precision)    
     return T
 end

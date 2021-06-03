@@ -37,7 +37,7 @@ function M_mn_wave_array(
     M_mn_wave_array_ = (_ -> zero(SVector{3,Complex})).(kr_array)
     for idx in eachindex(kr_array)
         M_mn_wave_array_[idx] = M_mn_wave(m, n, kr_array[idx], θ_array[idx], ϕ_array[idx], kind=kind)
-    end    
+    end
     return M_mn_wave_array_
 end
 
@@ -52,7 +52,7 @@ kr_array, θ_array, ϕ_array : arrays of arbitrary shape
 return
 ======
 N_mn_wave_array_ : N_mn_wave with shape same as any of kr_array, θ_array, ϕ_array, with an added dimension to represent the three components
-""" 
+"""
 function N_mn_wave_array(
         m::Int, n::Int, kr_array::AbstractVecOrMat{<:Complex{<:Real}}, θ_array::AbstractVecOrMat{R},
         ϕ_array::AbstractVecOrMat{R}; kind="regular"
@@ -86,13 +86,13 @@ J
 """
 function J_mn_m_n__integrand(
         m::Int, n::Int, m_::Int, n_::Int,
-        k1r_array::AbstractVecOrMat{<:Complex{<:Real}}, k2r_array::AbstractVecOrMat{<:Complex{<:Real}},
+        k1r_array::AbstractVecOrMat{C}, k2r_array::AbstractVecOrMat{C},
         r_array::AbstractVecOrMat{R}, θ_array::AbstractVecOrMat{R}, ϕ_array::AbstractVecOrMat{R}, n̂_array::Any; # TODO: I don't know why I get an error when I use n̂_array::AbstractVecOrMat{Vector{Float64}}
         kind="regular", J_superscript=11
-    ) where {R <: Real}
+    ) where {R <: Real, C <: Complex{R}}
 
     # determining the type of the first the second VSWF
-    if J_superscript == 11 # TODO: this if-statement can be done more nicely. We separate J_superscript into two pieces, the number 1 represents M_mn_wave_array, while number 2 represents N_mn_wave_array        
+    if J_superscript == 11 # TODO: this if-statement can be done more nicely. We separate J_superscript into two pieces, the number 1 represents M_mn_wave_array, while number 2 represents N_mn_wave_array
         first_function = M_mn_wave_array
         second_function = M_mn_wave_array
     elseif J_superscript == 12
@@ -107,18 +107,18 @@ function J_mn_m_n__integrand(
     else
         throw(DomainError("J_superscript must be any of [11,12,21,22]"))
     end
-    
+
     # determining the type of the first and second VSWF
     kind_first_function = "regular"
-    if kind == "irregular"                
+    if kind == "irregular"
         kind_second_function = "irregular"
-    elseif kind == "regular"        
+    elseif kind == "regular"
         kind_second_function = "regular"
     else
         throw(DomainError("""kind must be any of ["regular", "irregular"]"""))
     end
-    
-    # the cross product    
+
+    # the cross product
     cross_product_MN = cross.(
         first_function(m_, n_, k2r_array, θ_array, ϕ_array, kind=kind_first_function), # I can directly call M,N waves, with dots.
         second_function(-m, n, k1r_array, θ_array, ϕ_array, kind=kind_second_function)
@@ -126,7 +126,7 @@ function J_mn_m_n__integrand(
 
     # dot multiplying the cross product by the unit vector, and multiplying by (-1)^m
     cross_product_MN_dot_n̂ = (-1).^m .* vector_dot_product.(cross_product_MN, n̂_array)
-    
+
     # multiplying by dS=r²sin(θ)
     J_integrand = surface_integrand(cross_product_MN_dot_n̂, r_array, θ_array)
 
@@ -135,10 +135,10 @@ end
 
 function J_mn_m_n_(
         m::Int, n::Int, m_::Int, n_::Int,
-        k1r_array::AbstractVecOrMat{<:Complex{<:Real}}, k2r_array::AbstractVecOrMat{<:Complex{<:Real}},
+        k1r_array::AbstractVecOrMat{C}, k2r_array::AbstractVecOrMat{C},
         r_array::AbstractVecOrMat{R}, θ_array::AbstractVecOrMat{R}, ϕ_array::AbstractVecOrMat{R}, n̂_array::Any; # TODO: I don't know why I get an error when I use n̂_array::AbstractVecOrMat{Vector{Float64}}
-        kind="regular", J_superscript=11, rotationally_symmetric=false,    
-    ) where {R <: Real}
+        kind="regular", J_superscript=11, rotationally_symmetric=false,
+    ) where {R <: Real, C <: Complex{R}}
     if rotationally_symmetric
         # make sure that θ_array is 1D
         if length(size(θ_array)) != 1
@@ -146,21 +146,21 @@ function J_mn_m_n_(
         end
         ϕ_array = convert(typeof(θ_array), zeros(size(θ_array)))
     end
-    
+
     # getting the integrand
     if rotationally_symmetric && (m != m_)
         # the integral over ϕ is 2π * δ_m_m_, so it is zero if m != m_
         J_integrand_dS = zeros(size(θ_array))
-    
+
     else
         J_integrand_dS = J_mn_m_n__integrand(
             m, n,m_,n_,
             k1r_array,k2r_array,
             r_array,θ_array,ϕ_array,n̂_array;
-            kind=kind,J_superscript=J_superscript            
+            kind=kind,J_superscript=J_superscript
         )
     end
-    
+
     # calculate the surface integral
     if rotationally_symmetric
         # integrate over θ only
@@ -172,24 +172,24 @@ function J_mn_m_n_(
         J = trapz((θ_array[:,1], ϕ_array[1,:]), J_integrand_dS)
 end
 
-    return J    
+    return J
 end
 
 function Q_mn_m_n_(
         m::Int, n::Int, m_::Int, n_::Int,
-        k1::Complex{R}, k2::Complex{R},
-        k1r_array::AbstractVecOrMat{<:Complex{<:Real}}, k2r_array::AbstractVecOrMat{<:Complex{<:Real}},
+        k1::C, k2::C,
+        k1r_array::AbstractVecOrMat{C}, k2r_array::AbstractVecOrMat{C},
         r_array::AbstractVecOrMat{R}, θ_array::AbstractVecOrMat{R}, ϕ_array::AbstractVecOrMat{R}, n̂_array::Any; # TODO: I don't know why I get an error when I use n̂_array::AbstractVecOrMat{Vector{Float64}}
-        kind="regular", Q_superscript=11, rotationally_symmetric=false,    
-    )  where {R <: Real}
+        kind="regular", Q_superscript=11, rotationally_symmetric=false,
+    ) where {R <: Real, C <: Complex{R}}
     if Q_superscript == 11; J_superscript_1 = 21 ; J_superscript_2 = 12
     elseif Q_superscript == 12; J_superscript_1 = 11 ; J_superscript_2 = 22
     elseif Q_superscript == 21; J_superscript_1 = 22 ; J_superscript_2 = 11
     elseif Q_superscript == 22; J_superscript_1 = 12 ; J_superscript_2 = 21
-    end    
+    end
 
     Q = (
-        -im .* k1 .* k2 .* J_mn_m_n_(m, n, m_, n_, k1r_array, k2r_array, r_array, θ_array, ϕ_array, n̂_array; kind=kind, J_superscript=J_superscript_1, rotationally_symmetric=rotationally_symmetric) 
+        -im .* k1 .* k2 .* J_mn_m_n_(m, n, m_, n_, k1r_array, k2r_array, r_array, θ_array, ϕ_array, n̂_array; kind=kind, J_superscript=J_superscript_1, rotationally_symmetric=rotationally_symmetric)
         - im .* k1.^2    .* J_mn_m_n_(m, n, m_, n_, k1r_array, k2r_array, r_array, θ_array, ϕ_array, n̂_array; kind=kind, J_superscript=J_superscript_2, rotationally_symmetric=rotationally_symmetric)
     )
 
@@ -198,35 +198,35 @@ end
 
 function Q_matrix(
         n_max::Int,
-        k1::Complex{R}, k2::Complex{R},
-        k1r_array::AbstractVecOrMat{<:Complex{<:Real}}, k2r_array::AbstractVecOrMat{<:Complex{<:Real}},
+        k1::C, k2::C,
+        k1r_array::AbstractVecOrMat{C}, k2r_array::AbstractVecOrMat{C},
         r_array::AbstractVecOrMat{R}, θ_array::AbstractVecOrMat{R}, ϕ_array::AbstractVecOrMat{R}, n̂_array::Any; # TODO: I don't know why I get an error when I use n̂_array::AbstractVecOrMat{Vector{Float64}}
-        kind="regular", rotationally_symmetric=false, symmetric_about_plan_perpendicular_z=false,
+        kind="regular", rotationally_symmetric=false, symmetric_about_plane_perpendicular_z=false,
         verbose=false,
-    )  where {R <: Real}
+    ) where {R <: Real, C <: Complex{R}}
     idx_max = get_max_single_index_from_n_max(n_max)
-    Q_mn_m_n_11 = zeros(Complex, idx_max, idx_max)
-    Q_mn_m_n_12 = zeros(Complex, idx_max, idx_max)
-    Q_mn_m_n_21 = zeros(Complex, idx_max, idx_max)
-    Q_mn_m_n_22 = zeros(Complex, idx_max, idx_max)
+    Q_mn_m_n_11 = zeros(typeof(k1), idx_max, idx_max) # TODO: @Alok, should I replace arrays with SMatrix? I am afraid it may get slower, as I have seen that StaticArray may get slower for arrays larger than 100 elements
+    Q_mn_m_n_12 = zeros(typeof(k1), idx_max, idx_max)
+    Q_mn_m_n_21 = zeros(typeof(k1), idx_max, idx_max)
+    Q_mn_m_n_22 = zeros(typeof(k1), idx_max, idx_max)
 
     idx = 0;
     for n = 1:n_max
-        for m = -n:n            
-            idx += 1            
+        for m = -n:n
+            idx += 1
             idx_ = 0;
             for n_ = 1:n_max
-                for m_ = -n_:n_                    
-                    idx_ += 1                    
+                for m_ = -n_:n_
+                    idx_ += 1
                     if verbose; println("n,m,idx = $n,$m,$idx  n_,m_,idx_ = $n_,$m_,$idx_"); end
-                    
+
                     if rotationally_symmetric
                         if m == m_
-                            if symmetric_about_plan_perpendicular_z
+                            if symmetric_about_plane_perpendicular_z
                                 # apply equations 5.208 and 5.209
                                 if iseven(n + n_)
                                     Q_mn_m_n_11[idx, idx_] = Q_mn_m_n_(m, n, m_, n_, k1, k2, k1r_array, k2r_array, r_array, θ_array, ϕ_array, n̂_array;kind=kind,Q_superscript=11, rotationally_symmetric=rotationally_symmetric)
-                                    Q_mn_m_n_22[idx, idx_] = Q_mn_m_n_(m, n, m_, n_, k1, k2, k1r_array, k2r_array, r_array, θ_array, ϕ_array, n̂_array;kind=kind,Q_superscript=22, rotationally_symmetric=rotationally_symmetric)                        
+                                    Q_mn_m_n_22[idx, idx_] = Q_mn_m_n_(m, n, m_, n_, k1, k2, k1r_array, k2r_array, r_array, θ_array, ϕ_array, n̂_array;kind=kind,Q_superscript=22, rotationally_symmetric=rotationally_symmetric)
                                 else
                                     Q_mn_m_n_12[idx, idx_] = Q_mn_m_n_(m, n, m_, n_, k1, k2, k1r_array, k2r_array, r_array, θ_array, ϕ_array, n̂_array;kind=kind,Q_superscript=12, rotationally_symmetric=rotationally_symmetric)
                                     Q_mn_m_n_21[idx, idx_] = Q_mn_m_n_(m, n, m_, n_, k1, k2, k1r_array, k2r_array, r_array, θ_array, ϕ_array, n̂_array;kind=kind,Q_superscript=21, rotationally_symmetric=rotationally_symmetric)
@@ -235,15 +235,15 @@ function Q_matrix(
                                 Q_mn_m_n_11[idx, idx_] = Q_mn_m_n_(m, n, m_, n_, k1, k2, k1r_array, k2r_array, r_array, θ_array, ϕ_array, n̂_array;kind=kind,Q_superscript=11, rotationally_symmetric=rotationally_symmetric)
                                 Q_mn_m_n_12[idx, idx_] = Q_mn_m_n_(m, n, m_, n_, k1, k2, k1r_array, k2r_array, r_array, θ_array, ϕ_array, n̂_array;kind=kind,Q_superscript=12, rotationally_symmetric=rotationally_symmetric)
                                 Q_mn_m_n_21[idx, idx_] = Q_mn_m_n_(m, n, m_, n_, k1, k2, k1r_array, k2r_array, r_array, θ_array, ϕ_array, n̂_array;kind=kind,Q_superscript=21, rotationally_symmetric=rotationally_symmetric)
-                                Q_mn_m_n_22[idx, idx_] = Q_mn_m_n_(m, n, m_, n_, k1, k2, k1r_array, k2r_array, r_array, θ_array, ϕ_array, n̂_array;kind=kind,Q_superscript=22, rotationally_symmetric=rotationally_symmetric) 
+                                Q_mn_m_n_22[idx, idx_] = Q_mn_m_n_(m, n, m_, n_, k1, k2, k1r_array, k2r_array, r_array, θ_array, ϕ_array, n̂_array;kind=kind,Q_superscript=22, rotationally_symmetric=rotationally_symmetric)
                             end
-                        end                        
+                        end
                     else
-                        if symmetric_about_plan_perpendicular_z && (m == m_)
+                        if symmetric_about_plane_perpendicular_z && (m == m_)
                             # apply equations 5.208 and 5.209
                             if iseven(n + n_)
                                 Q_mn_m_n_11[idx, idx_] = Q_mn_m_n_(m, n, m_, n_, k1, k2, k1r_array, k2r_array, r_array, θ_array, ϕ_array, n̂_array;kind=kind,Q_superscript=11, rotationally_symmetric=rotationally_symmetric)
-                                Q_mn_m_n_22[idx, idx_] = Q_mn_m_n_(m, n, m_, n_, k1, k2, k1r_array, k2r_array, r_array, θ_array, ϕ_array, n̂_array;kind=kind,Q_superscript=22, rotationally_symmetric=rotationally_symmetric)                        
+                                Q_mn_m_n_22[idx, idx_] = Q_mn_m_n_(m, n, m_, n_, k1, k2, k1r_array, k2r_array, r_array, θ_array, ϕ_array, n̂_array;kind=kind,Q_superscript=22, rotationally_symmetric=rotationally_symmetric)
                             else
                                 Q_mn_m_n_12[idx, idx_] = Q_mn_m_n_(m, n, m_, n_, k1, k2, k1r_array, k2r_array, r_array, θ_array, ϕ_array, n̂_array;kind=kind,Q_superscript=12, rotationally_symmetric=rotationally_symmetric)
                                 Q_mn_m_n_21[idx, idx_] = Q_mn_m_n_(m, n, m_, n_, k1, k2, k1r_array, k2r_array, r_array, θ_array, ϕ_array, n̂_array;kind=kind,Q_superscript=21, rotationally_symmetric=rotationally_symmetric)
@@ -252,7 +252,7 @@ function Q_matrix(
                             Q_mn_m_n_11[idx, idx_] = Q_mn_m_n_(m, n, m_, n_, k1, k2, k1r_array, k2r_array, r_array, θ_array, ϕ_array, n̂_array;kind=kind,Q_superscript=11, rotationally_symmetric=rotationally_symmetric)
                             Q_mn_m_n_12[idx, idx_] = Q_mn_m_n_(m, n, m_, n_, k1, k2, k1r_array, k2r_array, r_array, θ_array, ϕ_array, n̂_array;kind=kind,Q_superscript=12, rotationally_symmetric=rotationally_symmetric)
                             Q_mn_m_n_21[idx, idx_] = Q_mn_m_n_(m, n, m_, n_, k1, k2, k1r_array, k2r_array, r_array, θ_array, ϕ_array, n̂_array;kind=kind,Q_superscript=21, rotationally_symmetric=rotationally_symmetric)
-                            Q_mn_m_n_22[idx, idx_] = Q_mn_m_n_(m, n, m_, n_, k1, k2, k1r_array, k2r_array, r_array, θ_array, ϕ_array, n̂_array;kind=kind,Q_superscript=22, rotationally_symmetric=rotationally_symmetric)                    
+                            Q_mn_m_n_22[idx, idx_] = Q_mn_m_n_(m, n, m_, n_, k1, k2, k1r_array, k2r_array, r_array, θ_array, ϕ_array, n̂_array;kind=kind,Q_superscript=22, rotationally_symmetric=rotationally_symmetric)
                         end
             end
         end
@@ -268,55 +268,68 @@ end
 
 function T_matrix(
         n_max::Int,
-        k1::Complex{R}, k2::Complex{R},
-        k1r_array::AbstractVecOrMat{<:Complex{<:Real}}, k2r_array::AbstractVecOrMat{<:Complex{<:Real}},
+        k1::C, k2::C,
+        k1r_array::AbstractVecOrMat{C}, k2r_array::AbstractVecOrMat{C},
         r_array::AbstractVecOrMat{R}, θ_array::AbstractVecOrMat{R}, ϕ_array::AbstractVecOrMat{R}, n̂_array::Any; # TODO: I don't know why I get an error when I use n̂_array::AbstractVecOrMat{Vector{Float64}}
-        rotationally_symmetric=false, symmetric_about_plan_perpendicular_z=false, HDF5_filename=nothing,      
-        verbose=false, create_new_arrays=false,
-    ) where {R <: Real}
-    
-    if create_new_arrays
-        RgQ =       Q_matrix(n_max, k1, k2, k1r_array, k2r_array, r_array, θ_array, ϕ_array, n̂_array;kind="regular"  , rotationally_symmetric=rotationally_symmetric, symmetric_about_plan_perpendicular_z=symmetric_about_plan_perpendicular_z, verbose=verbose)
-        Q_inv = inv(Q_matrix(n_max, k1, k2, k1r_array, k2r_array, r_array, θ_array, ϕ_array, n̂_array;kind="irregular", rotationally_symmetric=rotationally_symmetric, symmetric_about_plan_perpendicular_z=symmetric_about_plan_perpendicular_z, verbose=verbose))
-        T = -1 .* RgQ * Q_inv
-    
+        rotationally_symmetric=false, symmetric_about_plane_perpendicular_z=false, HDF5_filename=nothing,
+        verbose=false, create_new_arrays=false, BigFloat_precision = nothing
+    ) where {R <: Real, C <: Complex{R}}
+
+    if BigFloat_precision != nothing
+        return setprecision(BigFloat_precision) do
+            return T_matrix(
+                n_max, big(k1), big(k2), big.(k1r_array), big.(k2r_array), big.(r_array), big.(θ_array), big.(ϕ_array), [big.(n) for n in n̂_array];
+                HDF5_filename=HDF5_filename, rotationally_symmetric=rotationally_symmetric, symmetric_about_plane_perpendicular_z=symmetric_about_plane_perpendicular_z,                
+            )            
+        end
     else
-        T = (
-            -     Q_matrix(n_max, k1, k2, k1r_array, k2r_array, r_array, θ_array, ϕ_array, n̂_array;kind="regular"  , rotationally_symmetric=rotationally_symmetric, symmetric_about_plan_perpendicular_z=symmetric_about_plan_perpendicular_z, verbose=verbose)
-            * inv(Q_matrix(n_max, k1, k2, k1r_array, k2r_array, r_array, θ_array, ϕ_array, n̂_array;kind="irregular", rotationally_symmetric=rotationally_symmetric, symmetric_about_plan_perpendicular_z=symmetric_about_plan_perpendicular_z, verbose=verbose))
-        )
-    end
+        if create_new_arrays
+            RgQ =       Q_matrix(n_max, k1, k2, k1r_array, k2r_array, r_array, θ_array, ϕ_array, n̂_array;kind="regular"  , rotationally_symmetric=rotationally_symmetric, symmetric_about_plane_perpendicular_z=symmetric_about_plane_perpendicular_z, verbose=verbose)
+            Q_inv = inv(Q_matrix(n_max, k1, k2, k1r_array, k2r_array, r_array, θ_array, ϕ_array, n̂_array;kind="irregular", rotationally_symmetric=rotationally_symmetric, symmetric_about_plane_perpendicular_z=symmetric_about_plane_perpendicular_z, verbose=verbose))
+            T = -1 .* RgQ * Q_inv
 
-    if HDF5_filename != nothing
-        save_Tmatrix_to_HDF5_file(T, HDF5_filename)
-    end
+        else
+            T = (
+                -     Q_matrix(n_max, k1, k2, k1r_array, k2r_array, r_array, θ_array, ϕ_array, n̂_array;kind="regular"  , rotationally_symmetric=rotationally_symmetric, symmetric_about_plane_perpendicular_z=symmetric_about_plane_perpendicular_z, verbose=verbose)
+                * inv(Q_matrix(n_max, k1, k2, k1r_array, k2r_array, r_array, θ_array, ϕ_array, n̂_array;kind="irregular", rotationally_symmetric=rotationally_symmetric, symmetric_about_plane_perpendicular_z=symmetric_about_plane_perpendicular_z, verbose=verbose))
+            )
+        end
 
-    return T
+        if HDF5_filename != nothing
+            save_Tmatrix_to_HDF5_file(T, HDF5_filename)
+        end
+
+        return T
+    end
 end
 
+"""
+    Calculate T-matrix for a spheroid, with an extra kwarg `BigFloat_precision`
+
+BigFloat_precision : set to `nothing` by default. When BigFloat_precision == nothing, then the function will use input types as they are.
+"""
 function calculate_Tmatrix_for_spheroid(
         rx::R, rz::R, n_max::Int,
         k1::Complex{R}, k2::Complex{R};
         n_θ_points=10, n_ϕ_points=20, HDF5_filename=nothing,
-        rotationally_symmetric=false, symmetric_about_plan_perpendicular_z=false,
-    ) where {R <: Real}
-
-    k1 = complex(k1); k2 = complex(k2)
-    θ_1D_array = LinRange(1e-16, π, n_θ_points);
-    ϕ_1D_array = LinRange(1e-16, 2π, n_ϕ_points);
-    if rotationally_symmetric        
-        θ_array = collect(θ_1D_array)
-        ϕ_array = zeros(size(θ_array))
-    else
-        # eventually, this should be removed. I just keep it for sanity checks.
-        θ_array, ϕ_array = meshgrid(θ_1D_array, ϕ_1D_array);
-    end
-    θ_array = convert.(typeof(rx), θ_array)
-    ϕ_array = convert.(typeof(rx), ϕ_array)
+        rotationally_symmetric=false, symmetric_about_plane_perpendicular_z=false,
+        BigFloat_precision = nothing
+    ) where {R <: Real}    
+    
+    # create a grid of θ_ϕ
+    θ_array, ϕ_array = meshgrid_θ_ϕ(n_θ_points, n_ϕ_points; min_θ=1e-16, min_ϕ=1e-16, rotationally_symmetric=rotationally_symmetric)    
+    
+    # calculate r and n̂ for the geometry
     r_array, n̂_array = ellipsoid(rx, rz, θ_array);
+
+    # calculate T-matrix
     k1r_array = k1 .* r_array;
     k2r_array = k2 .* r_array;
-    T = T_matrix(n_max, k1, k2, k1r_array, k2r_array, r_array, θ_array, ϕ_array, n̂_array; HDF5_filename=HDF5_filename, rotationally_symmetric=rotationally_symmetric, symmetric_about_plan_perpendicular_z=symmetric_about_plan_perpendicular_z)    
+    T = T_matrix(
+        n_max, k1, k2, k1r_array, k2r_array, r_array, θ_array, ϕ_array, n̂_array;
+        HDF5_filename=HDF5_filename, rotationally_symmetric=rotationally_symmetric, symmetric_about_plane_perpendicular_z=symmetric_about_plane_perpendicular_z,
+        BigFloat_precision = BigFloat_precision
+    )
     return T
 end
 
@@ -339,3 +352,15 @@ particle geometry: it can be:
 function Tmatrix_nice()
     # TODO
 end
+
+
+### precompiling
+"""
+R =
+precompile(T_matrix, (
+    Int, Complex{R}, k2::Complex{R},
+    k1r_array::AbstractVecOrMat{<:Complex{<:Real}}, k2r_array::AbstractVecOrMat{<:Complex{<:Real}},
+    r_array::AbstractVecOrMat{R}, θ_array::AbstractVecOrMat{R}, ϕ_array::AbstractVecOrMat{R}, n̂_array::Any; # TODO: I don't know why I get an error when I use n̂_array::AbstractVecOrMat{Vector{Float64}}
+    rotationally_symmetric=false, symmetric_about_plane_perpendicular_z=false, HDF5_filename=nothing,
+    verbose=false, create_new_arrays=false,)
+"""

@@ -22,7 +22,9 @@ end
 
 
 function create_array_from_elements(x1, x2, x3)
-    return [x1,x2,x3]
+    # TODO: @Alok, should I use SVector? what are the drawbacks?
+    #return [x1,x2,x3]
+    return SVector(x1,x2,x3)
 end
 
 """
