@@ -106,9 +106,9 @@ end
 """
     Save T-matrix to HDF5 file, with fields "Tmatrix_real_CELES_convention" and "Tmatrix_imag_CELES_convention"
 """
-function save_Tmatrix_to_HDF5_file(T, HDF5_filename)    
-    h5write(HDF5_filename, "Tmatrix_real_CELES_convention", real(T))
-    h5write(HDF5_filename, "Tmatrix_imag_CELES_convention", imag(T))
+function save_Tmatrix_to_HDF5_file(T, HDF5_filename)
+    h5write(HDF5_filename, "Tmatrix_real_CELES_convention", Float64.(real(T))) # TODO: can we store BigFloat in HDF5? I converted to `Float64` because I couldn't read the file when I stored BigFloat
+    h5write(HDF5_filename, "Tmatrix_imag_CELES_convention", Float64.(imag(T)))
 end
 
 # getting indices of T-matrix
