@@ -91,6 +91,7 @@ function J_mn_m_n__integrand(
         kind="regular", J_superscript=11
     ) where {R <: Real, C <: Complex{R}}
 
+    
     # determining the type of the first the second VSWF
     if J_superscript == 11 # TODO: this if-statement can be done more nicely. We separate J_superscript into two pieces, the number 1 represents M_mn_wave_array, while number 2 represents N_mn_wave_array
         first_function = M_mn_wave_array
@@ -133,6 +134,60 @@ function J_mn_m_n__integrand(
     return J_integrand
 end
 
+
+"""
+    Same as J_mn_m_n__integrand, but uses M_mn_wave_SVector and N_mn_wave_SVector
+"""
+function J_mn_m_n__integrand_SVector(
+    m::Int, n::Int, m_::Int, n_::Int,
+    k1r_array::AbstractVecOrMat{C}, k2r_array::AbstractVecOrMat{C},
+    r_array::AbstractVecOrMat{R}, θ_array::AbstractVecOrMat{R}, ϕ_array::AbstractVecOrMat{R}, n̂_array::Any; # TODO: I don't know why I get an error when I use n̂_array::AbstractVecOrMat{Vector{Float64}}
+    kind="regular", J_superscript=11
+) where {R <: Real, C <: Complex{R}}
+
+
+# determining the type of the first the second VSWF
+if J_superscript == 11 # TODO: this if-statement can be done more nicely. We separate J_superscript into two pieces, the number 1 represents M_mn_wave_SVector, while number 2 represents N_mn_wave_SVector
+    first_function = M_mn_wave_SVector
+    second_function = M_mn_wave_SVector
+elseif J_superscript == 12
+    first_function = M_mn_wave_SVector
+    second_function = N_mn_wave_SVector
+elseif J_superscript == 21
+    first_function = N_mn_wave_SVector
+    second_function = M_mn_wave_SVector
+elseif J_superscript == 22
+    first_function = N_mn_wave_SVector
+    second_function = N_mn_wave_SVector
+else
+    throw(DomainError("J_superscript must be any of [11,12,21,22]"))
+end
+
+# determining the type of the first and second VSWF
+kind_first_function = "regular"
+if kind == "irregular"
+    kind_second_function = "irregular"
+elseif kind == "regular"
+    kind_second_function = "regular"
+else
+    throw(DomainError("""kind must be any of ["regular", "irregular"]"""))
+end
+
+# the cross product
+cross_product_MN = cross.(
+    first_function.(m_, n_, k2r_array, θ_array, ϕ_array, kind=kind_first_function), # I can directly call M,N waves, with dots.
+    second_function.(-m, n, k1r_array, θ_array, ϕ_array, kind=kind_second_function)
+)
+
+# dot multiplying the cross product by the unit vector, and multiplying by (-1)^m
+cross_product_MN_dot_n̂ = (-1).^m .* vector_dot_product.(cross_product_MN, n̂_array)
+
+# multiplying by dS=r²sin(θ)
+J_integrand = surface_integrand(cross_product_MN_dot_n̂, r_array, θ_array)
+
+return J_integrand
+end
+
 function J_mn_m_n_(
         m::Int, n::Int, m_::Int, n_::Int,
         k1r_array::AbstractVecOrMat{C}, k2r_array::AbstractVecOrMat{C},
@@ -153,7 +208,7 @@ function J_mn_m_n_(
         J_integrand_dS = zeros(size(θ_array))
 
     else
-        J_integrand_dS = J_mn_m_n__integrand(
+        J_integrand_dS = J_mn_m_n__integrand_SVector(
             m, n,m_,n_,
             k1r_array,k2r_array,
             r_array,θ_array,ϕ_array,n̂_array;

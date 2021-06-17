@@ -18,18 +18,18 @@ println("***************************************************************")
 
 println("using Float64 =====================================")
 println("No symmetry exploited:")
-@time T_complex = calculate_Tmatrix_for_spheroid(rx, rz, n_max, k1, k2, rotationally_symmetric=false, symmetric_about_plane_perpendicular_z=false);
+@time calculate_Tmatrix_for_spheroid(rx, rz, n_max, k1, k2, rotationally_symmetric=false, symmetric_about_plane_perpendicular_z=false);
 
 # %%
 println("exploiting symmetry:")
-@time T_complex = calculate_Tmatrix_for_spheroid(rx, rz, n_max, k1, k2, rotationally_symmetric=true, symmetric_about_plane_perpendicular_z=true);
+@time calculate_Tmatrix_for_spheroid(rx, rz, n_max, k1, k2, rotationally_symmetric=true, symmetric_about_plane_perpendicular_z=true);
 
 println("using BigFloat =====================================")
 println("exploiting symmetry:")
 BigFloat_precision_list = 2 .^ [6,7,8,9]
 for precision_here = BigFloat_precision_list
     println("using precision $precision_here")
-    @time T_complex = calculate_Tmatrix_for_spheroid(rx, rz, n_max, k1, k2, rotationally_symmetric=true, symmetric_about_plane_perpendicular_z=true, BigFloat_precision = precision_here);
+    @time calculate_Tmatrix_for_spheroid(rx, rz, n_max, k1, k2, rotationally_symmetric=true, symmetric_about_plane_perpendicular_z=true, BigFloat_precision = precision_here);
     println()
 end
 
@@ -51,16 +51,16 @@ println("***************************************************************")
 
 println("using Float64 =====================================")
 println("No symmetry exploited:")
-@time T_complex = calculate_Tmatrix_for_spheroid_SeparateRealImag(rx, rz, n_max, k1_r, k1_i, k2_r, k2_i; rotationally_symmetric=false, symmetric_about_plane_perpendicular_z=false);
+@time calculate_Tmatrix_for_spheroid_SeparateRealImag(rx, rz, n_max, k1_r, k1_i, k2_r, k2_i; rotationally_symmetric=false, symmetric_about_plane_perpendicular_z=false);
 
 println("exploiting symmetry:")
-@time T_complex = calculate_Tmatrix_for_spheroid_SeparateRealImag(rx, rz, n_max, k1_r, k1_i, k2_r, k2_i; rotationally_symmetric=true, symmetric_about_plane_perpendicular_z=true);
+@time calculate_Tmatrix_for_spheroid_SeparateRealImag(rx, rz, n_max, k1_r, k1_i, k2_r, k2_i; rotationally_symmetric=true, symmetric_about_plane_perpendicular_z=true);
 
 println("using BigFloat =====================================")
 println("exploiting symmetry:")
 BigFloat_precision_list = 2 .^ [6,7,8,9,10]
 for precision_here = BigFloat_precision_list
     println("using precision $precision_here")
-    @time T_complex = calculate_Tmatrix_for_spheroid_SeparateRealImag(rx, rz, n_max, k1_r, k1_i, k2_r, k2_i; rotationally_symmetric=true, symmetric_about_plane_perpendicular_z=true, BigFloat_precision = precision_here);
+    @time calculate_Tmatrix_for_spheroid_SeparateRealImag(rx, rz, n_max, k1_r, k1_i, k2_r, k2_i; rotationally_symmetric=true, symmetric_about_plane_perpendicular_z=true, BigFloat_precision = precision_here);
 end
 
