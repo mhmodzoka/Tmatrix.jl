@@ -527,6 +527,12 @@ git-tree-sha1 = "b2a7af664e098055a7529ad1a900ded962bca488"
 uuid = "2f80f16e-611a-54ab-bc61-aa92de5b98fc"
 version = "8.44.0+0"
 
+[[PProf]]
+deps = ["AbstractTrees", "FlameGraphs", "Libdl", "OrderedCollections", "Profile", "ProtoBuf", "pprof_jll"]
+git-tree-sha1 = "fea8f130c2f8894af33d4f42a5ab672b3c7f47f7"
+uuid = "e4faabce-9ead-11e9-39d9-4379958e3056"
+version = "2.0.1"
+
 [[Pango_jll]]
 deps = ["Artifacts", "Cairo_jll", "Fontconfig_jll", "FreeType2_jll", "FriBidi_jll", "Glib_jll", "HarfBuzz_jll", "JLLWrappers", "Libdl", "Pkg"]
 git-tree-sha1 = "9bc1871464b12ed19297fbc56c4fb4ba84988b0d"
@@ -562,6 +568,11 @@ deps = ["Cairo", "Colors", "FileIO", "FlameGraphs", "Graphics", "Gtk", "GtkReact
 git-tree-sha1 = "caa269e6f86900de232dffaf7e66edfe9414b007"
 uuid = "c46f51b8-102a-5cf2-8d2c-8597cb0e0da7"
 version = "0.6.9"
+
+[[ProtoBuf]]
+git-tree-sha1 = "51b74991da46594fb411a715e7e092bef50b99ff"
+uuid = "3349acd9-ac6a-5e09-bcdb-63829b23a429"
+version = "0.8.0"
 
 [[Quadmath]]
 deps = ["Printf", "Random", "Requires"]
@@ -633,6 +644,12 @@ deps = ["ChainRulesCore", "LogExpFunctions", "OpenSpecFun_jll"]
 git-tree-sha1 = "a50550fa3164a8c46747e62063b4d774ac1bcf49"
 uuid = "276daf66-3868-5448-9aa4-cd146d93841b"
 version = "1.5.1"
+
+[[StatProfilerHTML]]
+deps = ["Profile", "Test"]
+git-tree-sha1 = "1b039dcd0209c9541056af2c03850cff695913a5"
+uuid = "a8a75453-ed82-57c9-9e16-4cd1196ecbf5"
+version = "1.0.0"
 
 [[Static]]
 deps = ["IfElse"]
@@ -909,6 +926,12 @@ uuid = "8e850ede-7688-5339-a07c-302acd2aaf8d"
 [[p7zip_jll]]
 deps = ["Artifacts", "Libdl"]
 uuid = "3f19e933-33d8-53b3-aaab-bd5110c3b7a0"
+
+[[pprof_jll]]
+deps = ["Libdl", "Pkg"]
+git-tree-sha1 = "a744142237713a5a567ef1a7438d4154cb71fd26"
+uuid = "cf2c5f97-e748-59fa-a03f-dda3c62118cb"
+version = "0.0.0-20191205061153+0"
 
 [[xkbcommon_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg", "Wayland_jll", "Wayland_protocols_jll", "Xorg_libxcb_jll", "Xorg_xkeyboard_config_jll"]
