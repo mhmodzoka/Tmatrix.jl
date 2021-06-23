@@ -1,0 +1,16 @@
+{
+	"folders": [
+		{
+			"path": "../../../sphericalem"
+		},
+		{
+			"path": "../../VectorSphericalWaves.jl"
+		},
+		{
+			"path": ".."
+		}
+	],
+	"settings": {
+		"julia.environmentPath": "/data-new/julia_codes/VectorSphericalWaves.jl"
+	}
+}
