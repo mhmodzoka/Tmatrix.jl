@@ -1,13 +1,16 @@
 using Tmatrix
-
 import Zygote
+import FiniteDifferences
 
-n_θ_points = 10
+finite_difference_method = FiniteDifferences.central_fdm(5, 1; factor=1e-6)
+
+# inputs ====================================================
+n_θ_points = 5
 n_ϕ_points = 2
 m, n, m_, n_ = 2, 3, 2, 5
 n_max = 1
 k1_r, k1_i, k2_r, k2_i = 1e5, 1e3, 2e5, 3e3
-rotationally_symmetric = false
+rotationally_symmetric = true
 symmetric_about_plane_perpendicular_z = false
 rx, rz = 1e-6, 1.2e-6
 kind = "regular"
@@ -25,21 +28,41 @@ else
 end
 r_array, n̂_array = Tmatrix.ellipsoid(rx, rz, θ_array);
 
-# test "J_mn_m_n__integrand_SeparateRealImag"
+epss = 1e-6
+
+# test "J_mn_m_n__integrand_SeparateRealImag" ====================================================================================
 J = Tmatrix.J_mn_m_n__integrand_SeparateRealImag(m, n, m_, n_, k1_r, k1_i, k2_r, k2_i, r_array, θ_array, ϕ_array, n̂_array, kind, J_superscript)
 J_ = Tmatrix.J_mn_m_n__integrand(m, n, m_, n_, complex(k1_r, k1_i) .* r_array, complex(k2_r, k2_i) .* r_array, r_array, θ_array, ϕ_array, n̂_array; kind=kind, J_superscript=J_superscript)
 
 println("==================================================================")
+println("testing <<J_mn_m_n__integrand_SeparateRealImag>>")
 println("Displaying results from _SeparateRealImag and the complex function")
 println("Displaying result from _SeparateRealImag function --------------------")
 display(Tmatrix.get_complex_matrix_from_concatenated_real_imag(J))
 println("Displaying result from complex function ------------------------------")
 display(J_)
 
-Zygote.jacobian(Tmatrix.J_mn_m_n__integrand_SeparateRealImag, m, n, m_, n_, k1_r, k1_i, k2_r, k2_i, r_array, θ_array, ϕ_array, n̂_array,kind,J_superscript)
+println("testing autodiff for <<J_mn_m_n__integrand_SeparateRealImag>> -----------------------------------------")
+@time J_mn_m_n__integrand_SeparateRealImag_jacobian = Zygote.jacobian(Tmatrix.J_mn_m_n__integrand_SeparateRealImag, m, n, m_, n_, k1_r, k1_i, k2_r, k2_i, r_array, θ_array, ϕ_array, n̂_array,kind,J_superscript)
+function J_mn_m_n__integrand_SeparateRealImag_lean(k1_r, k1_i, k2_r, k2_i, r_array, θ_array, ϕ_array, n̂_array)
+    Tmatrix.J_mn_m_n__integrand_SeparateRealImag(m, n, m_, n_, k1_r, k1_i, k2_r, k2_i, r_array, θ_array, ϕ_array, n̂_array, kind, J_superscript)
+end
+@time J_mn_m_n__integrand_SeparateRealImag_lean_jacobian = Zygote.jacobian(J_mn_m_n__integrand_SeparateRealImag_lean, k1_r, k1_i, k2_r, k2_i, r_array, θ_array, ϕ_array, n̂_array)
+@time J_jacobian_finite_diff = FiniteDifferences.jacobian(finite_difference_method, J_mn_m_n__integrand_SeparateRealImag_lean, k1_r, k1_i, k2_r, k2_i, r_array, θ_array, ϕ_array, n̂_array)
+@time J_jacobian_manual_numerical_diff = (
+    (J_mn_m_n__integrand_SeparateRealImag_lean(k1_r+epss, k1_i, k2_r, k2_i, r_array, θ_array, ϕ_array, n̂_array) - J_mn_m_n__integrand_SeparateRealImag_lean(k1_r-epss, k1_i, k2_r, k2_i, r_array, θ_array, ϕ_array, n̂_array)) / (2*epss),
+    (J_mn_m_n__integrand_SeparateRealImag_lean(k1_r, k1_i+epss, k2_r, k2_i, r_array, θ_array, ϕ_array, n̂_array) - J_mn_m_n__integrand_SeparateRealImag_lean(k1_r, k1_i-epss, k2_r, k2_i, r_array, θ_array, ϕ_array, n̂_array)) / (2*epss),
+    (J_mn_m_n__integrand_SeparateRealImag_lean(k1_r, k1_i, k2_r+epss, k2_i, r_array, θ_array, ϕ_array, n̂_array) - J_mn_m_n__integrand_SeparateRealImag_lean(k1_r, k1_i, k2_r-epss, k2_i, r_array, θ_array, ϕ_array, n̂_array)) / (2*epss),
+    (J_mn_m_n__integrand_SeparateRealImag_lean(k1_r, k1_i, k2_r, k2_i+epss, r_array, θ_array, ϕ_array, n̂_array) - J_mn_m_n__integrand_SeparateRealImag_lean(k1_r, k1_i, k2_r, k2_i-epss, r_array, θ_array, ϕ_array, n̂_array)) / (2*epss),
+    (J_mn_m_n__integrand_SeparateRealImag_lean(k1_r, k1_i, k2_r, k2_i, r_array.+epss, θ_array, ϕ_array, n̂_array) - J_mn_m_n__integrand_SeparateRealImag_lean(k1_r, k1_i, k2_r, k2_i, r_array.-epss, θ_array, ϕ_array, n̂_array)) ./ (2*epss),
+    (J_mn_m_n__integrand_SeparateRealImag_lean(k1_r, k1_i, k2_r, k2_i, r_array, θ_array.+epss, ϕ_array, n̂_array) - J_mn_m_n__integrand_SeparateRealImag_lean(k1_r, k1_i, k2_r, k2_i, r_array, θ_array.-epss, ϕ_array, n̂_array)) ./ (2*epss),
+)
+finite_difference_method = FiniteDifferences.central_fdm(5, 1; factor=1e-10)
+@time J_jacobian_finite_diff = FiniteDifferences.jacobian(finite_difference_method, J_mn_m_n__integrand_SeparateRealImag_lean, k1_r, k1_i, k2_r, k2_i, r_array, θ_array, ϕ_array, n̂_array)
+hcat(J_mn_m_n__integrand_SeparateRealImag_lean_jacobian[1], J_jacobian_finite_diff[1])
 
 
-# test "J_mn_m_n__SeparateRealImag"
+# test "J_mn_m_n__SeparateRealImag" ================================================================================================
 J = Tmatrix.J_mn_m_n__SeparateRealImag(m, n, m_, n_, k1_r, k1_i, k2_r, k2_i, r_array, θ_array, ϕ_array, n̂_array, kind, J_superscript, rotationally_symmetric)
 J_ = Tmatrix.J_mn_m_n_(m, n, m_, n_, complex(k1_r, k1_i) .* r_array, complex(k2_r, k2_i) .* r_array, r_array, θ_array, ϕ_array, n̂_array; kind=kind, J_superscript=J_superscript, rotationally_symmetric=rotationally_symmetric)
 
@@ -56,6 +79,40 @@ Zygote.jacobian(
     (m, n, m_, n_, k1_r, k1_i, k2_r, k2_i, r_array, θ_array, ϕ_array, n̂_array) -> Tmatrix.J_mn_m_n__SeparateRealImag(m, n, m_, n_, k1_r, k1_i, k2_r, k2_i, r_array, θ_array, ϕ_array, n̂_array, kind, J_superscript, rotationally_symmetric),
     m, n, m_, n_, k1_r, k1_i, k2_r, k2_i, r_array, θ_array, ϕ_array, n̂_array
 )
+
+Zygote.jacobian(J_mn_m_n__integrand_SeparateRealImag_lean, k1_r, k1_i, k2_r, k2_i, r_array, θ_array, ϕ_array, n̂_array)[5]
+
+epss = big(1e-6);
+vcat(
+    (
+        J_mn_m_n__integrand_SeparateRealImag_lean(big(k1_r), big(k1_i), big(k2_r), big(k2_i), big.(r_array.+epss), big.(θ_array), big.(ϕ_array), [big.(x) for x in n̂_array]) -
+        J_mn_m_n__integrand_SeparateRealImag_lean(big(k1_r), big(k1_i), big(k2_r), big(k2_i), big.(r_array.-epss), big.(θ_array), big.(ϕ_array), [big.(x) for x in n̂_array])) ./
+        (2*epss)...
+)
+
+single_one_array = zeros(size(r_array)); single_one_array[1] = 1
+
+for epss in [big(1e-50)]
+    display(vcat(
+        (
+            J_mn_m_n__integrand_SeparateRealImag_lean(big(k1_r), big(k1_i), big(k2_r), big(k2_i), big.(r_array+epss*single_one_array), big.(θ_array), big.(ϕ_array), [big.(x) for x in n̂_array]) -
+            J_mn_m_n__integrand_SeparateRealImag_lean(big(k1_r), big(k1_i), big(k2_r), big(k2_i), big.(r_array-epss*single_one_array), big.(θ_array), big.(ϕ_array), [big.(x) for x in n̂_array])) ./
+            (2*epss)...
+    ))
+    println()
+
+    display(vcat(
+        (
+            J_mn_m_n__integrand_SeparateRealImag_lean(big(k1_r), big(k1_i), big(k2_r), big(k2_i), big.(r_array), big.(θ_array+epss*single_one_array), big.(ϕ_array), [big.(x) for x in n̂_array]) -
+            J_mn_m_n__integrand_SeparateRealImag_lean(big(k1_r), big(k1_i), big(k2_r), big(k2_i), big.(r_array), big.(θ_array-epss*single_one_array), big.(ϕ_array), [big.(x) for x in n̂_array])) ./
+            (2*epss)...
+    ))
+    println()
+end
+
+
+
+
 
 
 # test "Q_mn_m_n_SeparateRealImag"
@@ -104,121 +161,6 @@ display(Tmatrix.get_complex_matrix_from_concatenated_real_imag(T))
 println("Displaying result from complex function ------------------------------")
 display(T_)
 
-Zygote.jacobian(Tmatrix.T_matrix_SeparateRealImag, n_max, k1_r, k1_i, k2_r, k2_i, r_array, θ_array, ϕ_array, n̂_array, rotationally_symmetric, symmetric_about_plane_perpendicular_z)
+@time T = Tmatrix.T_matrix_SeparateRealImag(n_max, k1_r, k1_i, k2_r, k2_i, r_array, θ_array, ϕ_array, n̂_array, rotationally_symmetric, symmetric_about_plane_perpendicular_z)
+@time ∂T = Zygote.jacobian(Tmatrix.T_matrix_SeparateRealImag, n_max, k1_r, k1_i, k2_r, k2_i, r_array, θ_array, ϕ_array, n̂_array, rotationally_symmetric, symmetric_about_plane_perpendicular_z)
 
-
-
-import Tmatrix.J_mn_m_n__integrand_SeparateRealImag
-import Tmatrix.surface_integrand
-
-using VectorSphericalWaves
-using ComplexOperations
-function J_mn_m_n__integrand_SeparateRealImag(
-        m::Int, n::Int, m_::Int, n_::Int,
-        k1_r::R, k1_i::R, k2_r::R, k2_i::R,
-        r_array::AbstractVecOrMat{R}, θ_array::AbstractVecOrMat{R}, ϕ_array::AbstractVecOrMat{R}, n̂_array::Any,
-        kind::String, J_superscript::Int
-    ) where {R <: Real}
-
-    # TODO: do you think I should have done these multiplication outside, rather than repeating them whenever the function is called? or Julia should eliminate these duplicate calculation?
-    kr1_r = k1_r .* r_array
-    kr1_i = k1_i .* r_array
-    kr2_r = k2_r .* r_array
-    kr2_i = k2_i .* r_array
-
-    # calculate the integrand
-    if J_superscript == 11 # TODO: this if-statement can be done more nicely. We separate J_superscript into two pieces, the number 1 represents M_mn_wave_SeparateRealImag, while number 2 represents N_mn_wave_SeparateRealImag        
-        first_function = M_mn_wave_SeparateRealImag
-        second_function = M_mn_wave_SeparateRealImag
-    elseif J_superscript == 12
-        first_function = M_mn_wave_SeparateRealImag
-        second_function = N_mn_wave_SeparateRealImag
-    elseif J_superscript == 21
-        first_function = N_mn_wave_SeparateRealImag
-        second_function = M_mn_wave_SeparateRealImag
-    elseif J_superscript == 22
-        first_function = N_mn_wave_SeparateRealImag
-        second_function = N_mn_wave_SeparateRealImag
-    else
-        throw(DomainError("J_superscript must be any of [11,12,21,22]"))
-    end
-    
-    kind_first_function = "regular"
-    if kind == "irregular"                
-        kind_second_function = "irregular"
-    elseif kind == "regular"        
-        kind_second_function = "regular"
-    else
-        throw(DomainError("""kind must be any of ["regular", "irregular"]"""))
-    end
-
-    # the cross product    
-    cross_product_MN = complex_vector_cross_product.(
-        first_function.(m_, n_, kr2_r, kr2_i, θ_array, ϕ_array, kind_first_function),
-        second_function.(-m, n, kr1_r, kr1_i, θ_array, ϕ_array, kind_second_function),
-    )
-    println("size of cross_product_MN : $(size(cross_product_MN))")
-    println(cross_product_MN)
-
-    println("size of n̂_array : $(size(n̂_array))")
-    println(n̂_array)
-
-    cross_product_MN_dot_n̂ = (-1).^m .* complex_vector_dot_product.(cross_product_MN, n̂_array)
-
-    println("size of cross_product_MN_dot_n̂ : $(size(cross_product_MN_dot_n̂))")
-    println(cross_product_MN_dot_n̂)
-
-    println("size of cross_product_MN_dot_n̂[1,1] : $(size(cross_product_MN_dot_n̂[1,1]))")
-    println(cross_product_MN_dot_n̂[1,1])
-
-    println("size of r_array : $(size(r_array))")
-    println(r_array)
-
-    println("size of θ_array : $(size(θ_array))")
-    println(θ_array)
-    
-    J_integrand = Tmatrix.surface_integrand(cross_product_MN_dot_n̂, r_array, θ_array)
-
-    println("size of J_integrand : $(size(J_integrand))")
-    println(J_integrand)
-
-    # return vcat(J_integrand...) # I had to flatten all nested arrays.
-    return hcat([i[1] for i in J_integrand], [i[2] for i in J_integrand])
-end 
-
-
-"""
-    Multiply the integrand by the `dS` element, which equals r²sin(θ)
-"""
-function surface_integrand(
-        integrand::AbstractVecOrMat{C}, r_array::AbstractVecOrMat{R}, θ_array::AbstractVecOrMat{R}
-    ) where {R <: Real, C <: Complex{R}} 
-    return integrand .* r_array.^2 .* sin.(θ_array)
-end
-
-"""
-    Multiply the integrand by the `dS` element, which equals r²sin(θ)
-"""
-function surface_integrand(
-        integrand::AbstractVecOrMat{R}, r_array::AbstractVecOrMat{R}, θ_array::AbstractVecOrMat{R}
-    ) where {R <: Real, C <: Complex{R}} 
-    return integrand .* r_array.^2 .* sin.(θ_array)
-end
-
-"""
-    Multiply the integrand by the `dS` element, which equals r²sin(θ)
-"""
-function surface_integrand(
-        integrand::AbstractVecOrMat{AbstractVecOrMat{C}}, r_array::AbstractVecOrMat{R}, θ_array::AbstractVecOrMat{R}
-    ) where {R <: Real, C <: Complex{R}} 
-    return integrand .* r_array.^2 .* sin.(θ_array)
-end
-
-"""
-    Multiply the integrand by the `dS` element, which equals r²sin(θ)
-"""
-function surface_integrand(
-        integrand::AbstractVecOrMat{AbstractVecOrMat{R}}, r_array::AbstractVecOrMat{R}, θ_array::AbstractVecOrMat{R}
-    ) where {R <: Real, C <: Complex{R}} 
-    return integrand .* r_array.^2 .* sin.(θ_array)
-end

@@ -5,7 +5,10 @@ version = "0.1.0"
 
 [deps]
 ComplexOperations = "45c10c9a-3fea-40aa-8a0f-0e2f7025918e"
+DataStructures = "864edb3b-99cc-5e75-8d2d-829cb0a9cfe8"
 EllipsisNotation = "da5c29d0-fa7d-589e-88eb-ea29b0a81949"
+FiniteDifferences = "26cc04aa-876d-5657-8c51-4c34ba976000"
+Flux = "587475ba-b771-5e3f-ad9e-33799f191a9c"
 HDF5 = "f67ccb44-e63f-5c2f-98bd-6dc0ccc4ba2f"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 PProf = "e4faabce-9ead-11e9-39d9-4379958e3056"
