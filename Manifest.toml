@@ -1121,8 +1121,8 @@ version = "1.0.2"
 uuid = "4ec0a83e-493e-50e2-b9ac-8f72acf5a8f5"
 
 [[VectorSphericalWaves]]
-deps = ["ChainRulesCore", "ComplexOperations", "DataStructures", "FiniteDifferences", "ForwardDiff", "HDF5", "Interpolations", "JLD", "LoopVectorization", "Memoize", "MultiFloats", "Plots", "PyPlot", "Quadmath", "SpecialFunctions", "StaticArrays", "Traceur", "WignerD", "Zygote"]
-git-tree-sha1 = "0c4650a19a409181fbcfbad9d600b3ad2a687fbd"
+deps = ["ChainRulesCore", "ComplexOperations", "DataStructures", "FiniteDifferences", "Flux", "ForwardDiff", "HDF5", "Interpolations", "JLD", "LoopVectorization", "Memoize", "MultiFloats", "Plots", "PyPlot", "Quadmath", "SpecialFunctions", "StaticArrays", "Traceur", "WignerD", "Zygote"]
+git-tree-sha1 = "10a6bdcfc2ec18850cb530fc978978d1f00525ae"
 repo-rev = "main"
 repo-url = "https://github.com/mhmodzoka/VectorSphericalWaves.jl"
 uuid = "bf4a7d2c-6958-4c00-8946-baf74e22a0dc"

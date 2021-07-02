@@ -81,7 +81,7 @@ end
 """
 function surface_integrand(
         integrand::AbstractVecOrMat{R}, r_array::AbstractVecOrMat{R}, θ_array::AbstractVecOrMat{R}
-    ) where {R <: Real, C <: Complex{R}} 
+    ) where {R <: Real} 
     return integrand .* r_array.^2 .* sin.(θ_array)
 end
 
@@ -226,3 +226,14 @@ function trapz_ELZOUKA(x::AbstractVector{R}, y::AbstractVector{R}, z::AbstractMa
     return trapz_ELZOUKA(y, integrand_wrt_x)
 end
 #######################
+"""
+    calculate orientation averaged scattering cross section given a T-matrix
+"""
+function get_OrentationAv_scattering_CrossSections_from_Tmatrix(T, k1)
+    if size(T)[1] == size(T)[2] # if T-matrix is a square matrix, then T-matrix is complex
+        
+    elseif size(T)[1] == size(T)[2]/2 # if T-matrix has number of columns double the number of rows, then T-matrix is hcat() of real and imag parts of Tmatrix
+        T = get_complex_matrix_from_concatenated_real_imag(T)
+    end
+    return real(2*pi/k1^2 * sum(T .* conj(T)))
+end

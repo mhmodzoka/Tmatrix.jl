@@ -432,7 +432,7 @@ end
 function T_matrix_SeparateRealImag(
         n_max::Int, k1_r::R, k1_i::R, k2_r::R, k2_i::R,
         r_array::AbstractVecOrMat{R}, θ_array::AbstractVecOrMat{R}, ϕ_array::AbstractVecOrMat{R}, n̂_array::Any,
-        rotationally_symmetric, symmetric_about_plane_perpendicular_z, BigFloat_precision
+        rotationally_symmetric::Bool, symmetric_about_plane_perpendicular_z::Bool, BigFloat_precision
     ) where {R <: Real}
     if BigFloat_precision != nothing
         return setprecision(BigFloat_precision) do
@@ -453,8 +453,37 @@ function T_matrix_SeparateRealImag(
 end
 
 """
-    allowing wavelength/frequency and material properties, rather than wavevectors
+    This can allow input of arbitrary mesh points
 """
+function T_matrix_SeparateRealImag_arbitrary_mesh(
+        n_max::Int, k1_r::R, k1_i::R, k2_r::R, k2_i::R,
+        r_array::AbstractVecOrMat{R}, θ_array::AbstractVecOrMat{R}, ϕ_array::AbstractVecOrMat{R},
+        rotationally_symmetric::Bool, symmetric_about_plane_perpendicular_z::Bool, BigFloat_precision
+    ) where {R <: Real}
+    if rotationally_symmetric
+        r_theta_n̂ = get_r_θ_n̂_arrays_from_r_θ_arrays_axisymmetrix(r_array, θ_array)
+        r_array = r_theta_n̂[:,1]
+        θ_array = r_theta_n̂[:,2]
+        ϕ_array = zeros(size(θ_array))
+        n̂_r_comp = r_theta_n̂[:,3]
+        n̂_θ_comp = r_theta_n̂[:,4]
+        n̂_ϕ_comp = r_theta_n̂[:,5]
+        n̂_array = reshape([Vector([n̂_r_comp[id], n̂_θ_comp[id], n̂_ϕ_comp[id]]) for id in eachindex(n̂_r_comp)], size(n̂_r_comp))
+        # println("rotationally symmetric T-matrix calculation for arbitrary mesh is starting ...")
+    end
+    
+    return T_matrix_SeparateRealImag(
+        n_max, k1_r, k1_i, k2_r, k2_i,
+        r_array, θ_array, ϕ_array, n̂_array,
+        rotationally_symmetric, symmetric_about_plane_perpendicular_z, BigFloat_precision
+    )
+end
+
+
+
+"""
+    allowing wavelength/frequency and material properties, rather than wavevectors
+
 function T_matrix_SeparateRealImag(
         n_max::Int, wl_or_freq_input::R, input_unit::R, Eps_r_r_1::R, Eps_r_i_1::R, Mu_r_r_1::R, Mu_r_i_1::R, Eps_r_r_2::R, Eps_r_i_2::R, Mu_r_r_2::R, Mu_r_i_2::R,
         r_array::AbstractVecOrMat{R}, θ_array::AbstractVecOrMat{R}, ϕ_array::AbstractVecOrMat{R}, n̂_array::Any,
@@ -477,6 +506,7 @@ function T_matrix_SeparateRealImag(
         rotationally_symmetric, symmetric_about_plane_perpendicular_z, BigFloat_precision
     )
 end
+"""
 
 function calculate_Tmatrix_for_spheroid_SeparateRealImag(
         rx::R, rz::R, n_max::Int,
