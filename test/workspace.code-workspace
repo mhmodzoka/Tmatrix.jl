@@ -1,13 +1,16 @@
 {
 	"folders": [
 		{
+			"path": ".."
+		},
+		{
+			"path": "../../ComplexOperations.jl"
+		},
+		{
 			"path": "../../../sphericalem"
 		},
 		{
 			"path": "../../VectorSphericalWaves.jl"
-		},
-		{
-			"path": ".."
 		}
 	],
 	"settings": {

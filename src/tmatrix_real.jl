@@ -146,7 +146,8 @@ function J_mn_m_n__integrand_SeparateRealImag_SMatrix(
     return hcat([i[1] for i in J_integrand], [i[2] for i in J_integrand])
 end    
 
-
+"""Computer surface integrals in equations 5.184 and 5.190
+"""
 function J_mn_m_n__SeparateRealImag(
         m::Int, n::Int, m_::Int, n_::Int,
         k1_r::R, k1_i::R, k2_r::R, k2_i::R,
@@ -183,12 +184,12 @@ function J_mn_m_n__SeparateRealImag(
 
     # surface integral
     if rotationally_symmetric
-        # integrate over θ only        
+        # integrate over θ only (i.e., 1D integration or line integral)      
         J_r = 2π * trapz_ELZOUKA(θ_array, J_integrand_dS_r)
         J_i = 2π * trapz_ELZOUKA(θ_array, J_integrand_dS_i)
 
     else
-        # integrate over θ and ϕ
+        # integrate over θ and ϕ (i.e., 2D integration or surface integral)
         # TODO: replace this integral with surface mesh quadrature, like this one: https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5095443/ , https://github.com/jareeger/Smooth_Closed_Surface_Quadrature_RBF-julia
         # assuming that θ_array, ϕ_array were created with meshgrid function
 
@@ -353,13 +354,23 @@ elseif Q_superscript == 22; J_superscript_1 = 12 ; J_superscript_2 = 21
     end
 end
 
+"""Calculate the entire regular and irregular Q matrix.
+
+Parameters
+----------
+kind : can be either "regular" or "irregular"
+
+returns
+-------
+Q_matrix : hcat of real and imaginary parts of Q matrix
+"""
 function Q_matrix_SeparateRealImag(
         n_max::Int, k1_r::R, k1_i::R, k2_r::R, k2_i::R,
         r_array::AbstractVecOrMat{R}, θ_array::AbstractVecOrMat{R}, ϕ_array::AbstractVecOrMat{R}, n̂_array::Any,
         kind::String, rotationally_symmetric::Bool, symmetric_about_plane_perpendicular_z::Bool,
     ) where {R <: Real}
 
-    m, n, m_, n_ = get_m_n_m__n__matrices_for_T_matrix(n_max)    
+    m, n, m_, n_ = get_m_n_m__n__matrices_for_T_matrix(n_max)  
     Q_mn_m_n_11 = Q_mn_m_n_SeparateRealImag.(m, n, m_, n_, k1_r, k1_i, k2_r, k2_i, [r_array], [θ_array], [ϕ_array], [n̂_array], kind, 11, rotationally_symmetric, symmetric_about_plane_perpendicular_z)
     Q_mn_m_n_12 = Q_mn_m_n_SeparateRealImag.(m, n, m_, n_, k1_r, k1_i, k2_r, k2_i, [r_array], [θ_array], [ϕ_array], [n̂_array], kind, 12, rotationally_symmetric, symmetric_about_plane_perpendicular_z)
     Q_mn_m_n_21 = Q_mn_m_n_SeparateRealImag.(m, n, m_, n_, k1_r, k1_i, k2_r, k2_i, [r_array], [θ_array], [ϕ_array], [n̂_array], kind, 21, rotationally_symmetric, symmetric_about_plane_perpendicular_z)
@@ -404,26 +415,36 @@ function Q_matrix_SeparateRealImag_SMatrix(
     return hcat(Q_r, Q_i) 
 end
 
+"""Main function that calculates T-matrix
+
+"""
 function T_matrix_SeparateRealImag(
         n_max::Int, k1_r::R, k1_i::R, k2_r::R, k2_i::R,
         r_array::AbstractVecOrMat{R}, θ_array::AbstractVecOrMat{R}, ϕ_array::AbstractVecOrMat{R}, n̂_array::Any,
         rotationally_symmetric, symmetric_about_plane_perpendicular_z
     ) where {R <: Real}
 
+    # calculating Regular Q and Irregular Q
     RgQ = Q_matrix_SeparateRealImag(n_max, k1_r, k1_i, k2_r, k2_i, r_array, θ_array, ϕ_array, n̂_array, "regular", rotationally_symmetric, symmetric_about_plane_perpendicular_z)
     Q   = Q_matrix_SeparateRealImag(n_max, k1_r, k1_i, k2_r, k2_i, r_array, θ_array, ϕ_array, n̂_array, "irregular", rotationally_symmetric, symmetric_about_plane_perpendicular_z)
     
-    Q = Float64.(Q) # TODO: I need to make the concrete type programmable, in case I need Float128
-    RgQ = Float64.(RgQ) # TODO: I need to make the concrete type programmable, in case I need Float128
+    #Q = Float64.(Q) # TODO: I need to make the concrete type programmable, in case I need Float128
+    #RgQ = Float64.(RgQ) # TODO: I need to make the concrete type programmable, in case I need Float128
 
+    # separating real and imaginary parts of Regular Q
     RgQ_r = RgQ[:, 1:Int(end / 2)]
     RgQ_i = RgQ[:, Int(end / 2) + 1:end]
+
+    # separating real and imaginary parts of irregular Q
     Q_r = Q[:, 1:Int(end / 2)]
     Q_i = Q[:, Int(end / 2) + 1:end]   
 
+    # calculating the inverse of irregular Q
     invQ = complex_matrix_inversion(Q_r, Q_i)
-    T = -1 .* complex_matrix_multiplication(RgQ_r, RgQ_i, invQ[1], invQ[2])
-    return hcat(T[1], T[2])    
+
+    # calculating the T-matrix
+    T = -1 .* complex_matrix_multiplication(RgQ_r, RgQ_i, invQ[1], invQ[2]) # equation 5.191
+    return hcat(T[1], T[2]) # T[1] and T[2] are the real and imaginary parts of T-matrix, respectively.
 end
 
 """
@@ -470,6 +491,8 @@ function T_matrix_SeparateRealImag_arbitrary_mesh(
         n̂_ϕ_comp = r_theta_n̂[:,5]
         n̂_array = reshape([Vector([n̂_r_comp[id], n̂_θ_comp[id], n̂_ϕ_comp[id]]) for id in eachindex(n̂_r_comp)], size(n̂_r_comp))
         # println("rotationally symmetric T-matrix calculation for arbitrary mesh is starting ...")
+    else
+        println("I need to code it!")
     end
     
     return T_matrix_SeparateRealImag(
@@ -479,25 +502,52 @@ function T_matrix_SeparateRealImag_arbitrary_mesh(
     )
 end
 
-
+"""
+    allowing wavelength/frequency and material properties, rather than wavevectors
+"""
+function T_matrix_SeparateRealImag_arbitrary_mesh(
+    n_max::Int, wl_or_freq_input::R, input_unit::String, Eps_r_r_1::R, Eps_r_i_1::R, Mu_r_r_1::R, Mu_r_i_1::R, Eps_r_r_2::R, Eps_r_i_2::R, Mu_r_r_2::R, Mu_r_i_2::R,
+    r_array::AbstractVecOrMat{R}, θ_array::AbstractVecOrMat{R}, ϕ_array::AbstractVecOrMat{R},
+    rotationally_symmetric::Bool, symmetric_about_plane_perpendicular_z::Bool, BigFloat_precision
+) where {R <: Real}
+    k1_complex = get_WaveVector(
+            wl_or_freq_input;
+            input_unit=input_unit,        
+            Eps_r = Complex(Eps_r_r_1, Eps_r_i_1),
+            Mu_r = Complex(Mu_r_r_1, Mu_r_i_1)
+    )
+    k2_complex = get_WaveVector(
+        wl_or_freq_input;
+        input_unit=input_unit,        
+        Eps_r = Complex(Eps_r_r_2, Eps_r_i_2),
+        Mu_r = Complex(Mu_r_r_2, Mu_r_i_2)
+    )
+    return T_matrix_SeparateRealImag_arbitrary_mesh(
+        n_max, real(k1_complex), imag(k1_complex), real(k2_complex), imag(k2_complex),
+        r_array, θ_array, ϕ_array,
+        rotationally_symmetric, symmetric_about_plane_perpendicular_z, BigFloat_precision
+    )
+end
 
 """
     allowing wavelength/frequency and material properties, rather than wavevectors
-
+"""
 function T_matrix_SeparateRealImag(
-        n_max::Int, wl_or_freq_input::R, input_unit::R, Eps_r_r_1::R, Eps_r_i_1::R, Mu_r_r_1::R, Mu_r_i_1::R, Eps_r_r_2::R, Eps_r_i_2::R, Mu_r_r_2::R, Mu_r_i_2::R,
+        n_max::Int, wl_or_freq_input::R, input_unit::String, Eps_r_r_1::R, Eps_r_i_1::R, Mu_r_r_1::R, Mu_r_i_1::R, Eps_r_r_2::R, Eps_r_i_2::R, Mu_r_r_2::R, Mu_r_i_2::R,
         r_array::AbstractVecOrMat{R}, θ_array::AbstractVecOrMat{R}, ϕ_array::AbstractVecOrMat{R}, n̂_array::Any,
         rotationally_symmetric, symmetric_about_plane_perpendicular_z, BigFloat_precision
     ) where {R <: Real}
     k1_complex = get_WaveVector(
         wl_or_freq_input;
         input_unit=input_unit,        
-        Eps_r = Complex(Eps_r_r_1,Eps_r_i_1), Mu_r = Complex(Mu_r_r_1, Mu_r_i_1)
+        Eps_r = Complex(Eps_r_r_1, Eps_r_i_1),
+        Mu_r = Complex(Mu_r_r_1, Mu_r_i_1)
     )
     k2_complex = get_WaveVector(
         wl_or_freq_input;
         input_unit=input_unit,        
-        Eps_r = Complex(Eps_r_r_2,Eps_r_i_2), Mu_r = Complex(Mu_r_r_2, Mu_r_i_2)
+        Eps_r = Complex(Eps_r_r_2, Eps_r_i_2),
+        Mu_r = Complex(Mu_r_r_2, Mu_r_i_2)
     )
 
     return T_matrix_SeparateRealImag(
@@ -506,8 +556,10 @@ function T_matrix_SeparateRealImag(
         rotationally_symmetric, symmetric_about_plane_perpendicular_z, BigFloat_precision
     )
 end
-"""
 
+"""
+HDF5_filename : string, the path to HDF5 file where Tmatrix is going to be saved.
+"""
 function calculate_Tmatrix_for_spheroid_SeparateRealImag(
         rx::R, rz::R, n_max::Int,
         k1_r::R, k1_i::R, k2_r::R, k2_i::R;
@@ -515,6 +567,7 @@ function calculate_Tmatrix_for_spheroid_SeparateRealImag(
         rotationally_symmetric=false, symmetric_about_plane_perpendicular_z=false,
         BigFloat_precision=nothing
     ) where {R <: Real}
+    
     
     # create a grid of θ_ϕ
     θ_array, ϕ_array = meshgrid_θ_ϕ(n_θ_points, n_ϕ_points; min_θ=1e-16, min_ϕ=1e-16, rotationally_symmetric=rotationally_symmetric)    
@@ -525,6 +578,7 @@ function calculate_Tmatrix_for_spheroid_SeparateRealImag(
     # calculate T-matrix
     T = T_matrix_SeparateRealImag(
         n_max, k1_r, k1_i, k2_r, k2_i, r_array, θ_array, ϕ_array, n̂_array,
-        rotationally_symmetric, symmetric_about_plane_perpendicular_z, BigFloat_precision)    
+        rotationally_symmetric, symmetric_about_plane_perpendicular_z, BigFloat_precision
+    )    
     return T
 end

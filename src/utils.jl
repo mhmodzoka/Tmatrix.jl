@@ -1,4 +1,7 @@
 # Contains all helper functions for Tmatrix module
+
+using LinearAlgebra
+
 """
     Calculate dot product for two vectors.    
 I made this function because the "dot" function in LinearAlgebra package doesn't work as expected for complex vectors.
@@ -72,7 +75,7 @@ end
 """
 function surface_integrand(
         integrand::AbstractVecOrMat{C}, r_array::AbstractVecOrMat{R}, θ_array::AbstractVecOrMat{R}
-    ) where {R <: Real, C <: Complex{R}} 
+    ) where {R <: Real,C <: Complex{R}} 
     return integrand .* r_array.^2 .* sin.(θ_array)
 end
 
@@ -90,7 +93,7 @@ end
 """
 function surface_integrand(
         integrand::AbstractVecOrMat{Matrix{C}}, r_array::AbstractVecOrMat{R}, θ_array::AbstractVecOrMat{R}
-    ) where {R <: Real, C <: Complex{R}} 
+    ) where {R <: Real,C <: Complex{R}} 
     return integrand .* r_array.^2 .* sin.(θ_array)
 end
 
@@ -99,7 +102,7 @@ end
 """
 function surface_integrand(
         integrand::AbstractVecOrMat{Matrix{R}}, r_array::AbstractVecOrMat{R}, θ_array::AbstractVecOrMat{R}
-    ) where {R <: Real, C <: Complex{R}} 
+    ) where {R <: Real,C <: Complex{R}} 
     return integrand .* r_array.^2 .* sin.(θ_array)
 end
 
@@ -140,6 +143,14 @@ end
 
 """
     Get 4 matrices for m, n, m_, n_, corresponding to rank and order of incident and scattered VSWF, represented by elements of T-matrix
+Arguments
+---------
+    n_max : Int, determine the size of the T-matrix
+Returns
+-------
+    m_matrix, n_matrix, m__matrix, n__matrix : each is a square matrix
+    
+
 """
 function get_m_n_m__n__matrices_for_T_matrix(n_max)
     n_m_idx = get_n_m_idx_array_given_n_max(n_max)
@@ -208,7 +219,7 @@ end
     1D numerical integral using trapezoidal rule
 x and y are 1D arrays
 """
-function trapz_ELZOUKA(x::AbstractVector{R}, y::AbstractVector{N}) where {R <: Real, N <: Number}
+function trapz_ELZOUKA(x::AbstractVector{R}, y::AbstractVector{N}) where {R <: Real,N <: Number}
     # TODO: small error if compared with Trapz.trapz
     base = x[2:end] - x[1:end - 1]
     av_height = (y[2:end] + y[1:end - 1]) / 2
@@ -221,19 +232,117 @@ end
     2D numerical integral using trapezoidal rule
 x and y are 1D arrays, z is 2D array
 """
-function trapz_ELZOUKA(x::AbstractVector{R}, y::AbstractVector{R}, z::AbstractMatrix{N}) where {R <: Real, N <: Number}
-    integrand_wrt_x = trapz_ELZOUKA.(eachcol(repeat(x,1,size(z,2))), eachcol(z))
+function trapz_ELZOUKA(x::AbstractVector{R}, y::AbstractVector{R}, z::AbstractMatrix{N}) where {R <: Real,N <: Number}
+    integrand_wrt_x = trapz_ELZOUKA.(eachcol(repeat(x, 1, size(z, 2))), eachcol(z))
     return trapz_ELZOUKA(y, integrand_wrt_x)
 end
+
+
 #######################
+# Calculate orientation-averaged sscattering, extinction and absorption cross sections.
 """
-    calculate orientation averaged scattering cross section given a T-matrix
+    calculate orientation averaged scattering cross section given a T-matrix and a wavevector.
+Input T-matrix can be a complex square matrix or a concatenation of separate real and imag parts of T-matrix
 """
-function get_OrentationAv_scattering_CrossSections_from_Tmatrix(T, k1)
+function get_OrentationAv_scattering_CrossSections_from_Tmatrix(T::AbstractMatrix, k1::C) where C <: Complex
     if size(T)[1] == size(T)[2] # if T-matrix is a square matrix, then T-matrix is complex
-        
-    elseif size(T)[1] == size(T)[2]/2 # if T-matrix has number of columns double the number of rows, then T-matrix is hcat() of real and imag parts of Tmatrix
-        T = get_complex_matrix_from_concatenated_real_imag(T)
+        return real(2 * pi / k1^2 * sum(T .* conj(T)))
+    elseif size(T)[1] == size(T)[2] / 2 # if T-matrix has number of columns double the number of rows, then T-matrix is hcat() of real and imag parts of Tmatrix        
+        return get_OrentationAv_scattering_CrossSections_from_Tmatrix_SeparateRealImag(T, real(k1), imag(k1))
+    end    
+end
+
+"""
+    calculate orientation averaged scattering cross section given a T-matrix, wavelength and optical properties of surrounding.
+Input T-matrix can be a complex square matrix or a concatenation of separate real and imag parts of T-matrix
+"""
+function get_OrentationAv_scattering_CrossSections_from_Tmatrix(T::AbstractMatrix,  wl_or_freq_input::R, input_unit::String, Eps_r_1::C, Mu_r_1::C) where {C <: Complex, R <: Real}    
+    return get_OrentationAv_scattering_CrossSections_from_Tmatrix(
+        T,
+        get_WaveVector(
+            wl_or_freq_input;
+            input_unit=input_unit,        
+            Eps_r = Eps_r_1,
+            Mu_r = Mu_r_1
+        )
+    )
+end
+
+"""
+    calculate orientation averaged scattering cross section given a T-matrix and a wavevector. This works for "_SeparateRealImag"
+"""
+function get_OrentationAv_scattering_CrossSections_from_Tmatrix_SeparateRealImag(T::AbstractMatrix{R}, k1_r::R, k1_i::R) where R <: Real
+    T_r, T_i = Tmatrix.separate_real_imag(T)
+    T_by_conjT_sum = sum(complex_multiply.(T_r, T_i, T_r, -T_i))
+    k1_squared = complex_multiply(k1_r, k1_i, k1_r, k1_i)
+    two_pi_over_k1_squared = complex_divide(2 * pi, 0, k1_squared[1], k1_squared[2])
+    return complex_multiply(two_pi_over_k1_squared[1], two_pi_over_k1_squared[2], T_by_conjT_sum[1], T_by_conjT_sum[2])[1]    
+end 
+
+"""
+    calculate orientation averaged extinction cross section given a T-matrix and a wavevector.
+"""
+function get_OrentationAv_extinction_CrossSections_from_Tmatrix(T::AbstractMatrix, k1::C) where C <: Complex
+    if size(T)[1] == size(T)[2] # if T-matrix is a square matrix, then T-matrix is complex
+        return real(-2 * pi / k1^2 * tr(real(T)))
+    elseif size(T)[1] == size(T)[2] / 2 # if T-matrix has number of columns double the number of rows, then T-matrix is hcat() of real and imag parts of Tmatrix        
+        return get_OrentationAv_extinction_CrossSections_from_Tmatrix_SeparateRealImag(T, real(k1), imag(k1))
     end
-    return real(2*pi/k1^2 * sum(T .* conj(T)))
+end
+
+"""
+    calculate orientation averaged extinction cross section given a T-matrix and a wavevector. This works for "_SeparateRealImag"
+"""
+function get_OrentationAv_extinction_CrossSections_from_Tmatrix_SeparateRealImag(T::AbstractMatrix{R}, k1_r::R, k1_i::R) where R <: Real
+    T_r, T_i = Tmatrix.separate_real_imag(T)
+    k1_squared = complex_multiply(k1_r, k1_i, k1_r, k1_i)
+    two_pi_over_k1_squared = complex_divide(2 * pi, 0, k1_squared[1], k1_squared[2])
+    return -two_pi_over_k1_squared[1] * tr(T_r)    
+end
+
+"""
+    calculate orientation averaged absorption cross section given a T-matrix and a wavevector.
+"""
+function get_OrentationAv_absorption_CrossSections_from_Tmatrix(T::AbstractMatrix, k1::C) where C <: Complex
+    return get_OrentationAv_extinction_CrossSections_from_Tmatrix(T, k1) - get_OrentationAv_scattering_CrossSections_from_Tmatrix(T, k1)
+end
+
+"""
+    calculate orientation averaged absorption cross section given a T-matrix and a wavevector. This works for "_SeparateRealImag"
+"""
+function get_OrentationAv_absorption_CrossSections_from_Tmatrix_SeparateRealImag(T::AbstractMatrix{R}, k1_r::R, k1_i::R) where R <: Real    
+    return get_OrentationAv_extinction_CrossSections_from_Tmatrix_SeparateRealImag(T, k1_r, k1_i) - get_OrentationAv_scattering_CrossSections_from_Tmatrix_SeparateRealImag(T, k1_r, k1_i)
+end
+
+
+"""
+    calculate orientation averaged emissivity cross section given a T-matrix and a wavevector.
+`particle_surface_area` has to be in units consistent with wavevector units. If waveevctor unit is per m, then the particle surface area has to be in m^2
+"""
+function get_OrentationAv_emissivity_CrossSections_from_Tmatrix(T::AbstractMatrix, k1::C, particle_surface_area::R) where {R <: Real,C <: Complex}
+    return get_OrentationAv_absorption_CrossSections_from_Tmatrix(T, k1) * 4 / particle_surface_area
+end
+
+"""
+    calculate orientation averaged emissivity cross section given a T-matrix and a wavevector. This works for "_SeparateRealImag"
+`particle_surface_area` has to be in units consistent with wavevector units. If waveevctor unit is per m, then the particle surface area has to be in m^2
+"""
+function get_OrentationAv_emissivity_CrossSections_from_Tmatrix_SeparateRealImag(T::AbstractMatrix{R}, k1_r::R, k1_i::R, particle_surface_area::R) where R <: Real    
+    return get_OrentationAv_absorption_CrossSections_from_Tmatrix_SeparateRealImag(T, k1_r, k1_i) * 4 / particle_surface_area
+end
+
+
+
+"""
+    calculate orientation averaged emissivity cross section given a T-matrix, wavelength and optical properties of surrounding. This works for "_SeparateRealImag"
+`particle_surface_area` has to be in units consistent with wavevector units. If waveevctor unit is per m, then the particle surface area has to be in m^2
+"""
+function get_OrentationAv_emissivity_CrossSections_from_Tmatrix_SeparateRealImag(T::AbstractMatrix{R}, wl_or_freq_input::R, input_unit::String, Eps_r_r_1::R, Eps_r_i_1::R, Mu_r_r_1::R, Mu_r_i_1::R, particle_surface_area::R) where R <: Real    
+    k1_complex = get_WaveVector(
+            wl_or_freq_input;
+            input_unit=input_unit,        
+            Eps_r = Complex(Eps_r_r_1, Eps_r_i_1),
+            Mu_r = Complex(Mu_r_r_1, Mu_r_i_1)
+    )
+    return get_OrentationAv_absorption_CrossSections_from_Tmatrix_SeparateRealImag(T, k1_r, k1_i) * 4 / particle_surface_area
 end
