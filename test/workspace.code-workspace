@@ -7,6 +7,9 @@
 			"path": "../../ComplexOperations.jl"
 		},
 		{
+			"path": "../../../SphEM"
+		},
+		{
 			"path": "../../../sphericalem"
 		},
 		{
@@ -14,6 +17,9 @@
 		}
 	],
 	"settings": {
-		"julia.environmentPath": "/data-new/julia_codes/VectorSphericalWaves.jl"
+		"julia.environmentPath": "/data-new/julia_codes/VectorSphericalWaves.jl",
+		"cSpell.words": [
+			"sphericalem"
+		]
 	}
 }
