@@ -23,8 +23,8 @@ end
 
 function create_array_from_elements(x1, x2, x3)
     # TODO: @Alok, should I use SVector? what are the drawbacks?
-    #return [x1,x2,x3]
-    return SVector(x1,x2,x3)
+    # return [x1,x2,x3]
+    return SVector(x1, x2, x3)
 end
 
 """
@@ -52,7 +52,7 @@ end
 It returns a Matrix, first and second columns are for r,θ, respectively. The third, fourth and fifth columns are for the three compoonents of the normal direction.
 """
 function create_1D_mesh_and_get_r_n̂(r_edges_array::AbstractVector{R}, θ_edges_array::AbstractVector{R}) where R <: Real
-    z = find_point_splitting_line_between_two_points_and_normal_vector_to_this_line.(r_edges_array[1:end-1], θ_edges_array[1:end-1], r_edges_array[2:end], θ_edges_array[2:end]);
+    z = find_point_splitting_line_between_two_points_and_normal_vector_to_this_line.(r_edges_array[1:end - 1], θ_edges_array[1:end - 1], r_edges_array[2:end], θ_edges_array[2:end]);
     """
     r_array = [z[id][1] for id = 1 : length(z)]
     θ_array = [z[id][2] for id = 1 : length(z)]
@@ -70,11 +70,11 @@ end
 """
 function find_point_splitting_line_between_two_points_and_normal_vector_to_this_line(r1::R, θ1::R, r2::R, θ2::R) where R <: Real
     S = calculate_distance_between_two_points(r1, θ1, r2, θ2)    
-    angle_between_r1_and_S = asin(r2 * sin(θ2-θ1) / S)
+    angle_between_r1_and_S = asin(r2 * sin(θ2 - θ1) / S)
     # to fix the inverse sin of obtuse angle
     if r2 > r1; angle_between_r1_and_S = pi - angle_between_r1_and_S; end
-    r = sqrt(r1^2 + (S/2)^2 - 2*r1*(S/2)*cos(angle_between_r1_and_S))  
-    angle_between_r1_and_r = asin(S/2 * sin(angle_between_r1_and_S)/r) # TODO: do the check for the "obtuse" angle
+    r = sqrt(r1^2 + (S / 2)^2 - 2 * r1 * (S / 2) * cos(angle_between_r1_and_S))  
+    angle_between_r1_and_r = asin(S / 2 * sin(angle_between_r1_and_S) / r) # TODO: do the check for the "obtuse" angle
     θ = angle_between_r1_and_r + θ1   
     
     γ = pi - angle_between_r1_and_S - angle_between_r1_and_r
@@ -82,16 +82,16 @@ function find_point_splitting_line_between_two_points_and_normal_vector_to_this_
     n̂_θ_comp = -cos(γ)
     n̂_r_comp = sin(γ)
 
-    #println("r1=$r1, θ1=$θ1, r2=$r2, θ2=$θ2, r=$r, S=$S, θ=$θ, angle_between_r1_and_S/pi=$(angle_between_r1_and_S/pi), asin($(r2 * sin(θ2-θ1) / S)), θ2-θ1=$(θ2-θ1)") 
+    # println("r1=$r1, θ1=$θ1, r2=$r2, θ2=$θ2, r=$r, S=$S, θ=$θ, angle_between_r1_and_S/pi=$(angle_between_r1_and_S/pi), asin($(r2 * sin(θ2-θ1) / S)), θ2-θ1=$(θ2-θ1)") 
     return hcat(r, θ, n̂_r_comp, n̂_θ_comp, zero(R))
-    #return hcat(r, θ, n̂_θ_comp)
+    # return hcat(r, θ, n̂_θ_comp)
 end
 
 """
     Find distance between two points (r1, θ1), and (r2, θ2)
 """
 function calculate_distance_between_two_points(r1::R, θ1::R, r2::R, θ2::R) where R <: Real
-    return sqrt(r1^2 + r2^2 - 2*r1*r2*cos(θ2-θ1))
+    return sqrt(r1^2 + r2^2 - 2 * r1 * r2 * cos(θ2 - θ1))
 end
 
 """
@@ -100,7 +100,7 @@ end
 function calculate_total_length_of_1D_mesh(r_array::AbstractVector{R}, θ_array::AbstractVector{R}) where R <: Real
     return sum(
         calculate_distance_between_two_points.(
-            r_array[1:end-1], θ_array[1:end-1], r_array[2:end], θ_array[2:end]
+            r_array[1:end - 1], θ_array[1:end - 1], r_array[2:end], θ_array[2:end]
         )
     )
 end
@@ -111,7 +111,7 @@ end
 function calculate_surface_area_of_axisymmetric_particle(r_array::AbstractVector{R}, θ_array::AbstractVector{R}) where R <: Real
     return sum(
         calculate_lateral_surface_area_of_truncated_cone.(
-            r_array[1:end-1], θ_array[1:end-1], r_array[2:end], θ_array[2:end]
+            r_array[1:end - 1], θ_array[1:end - 1], r_array[2:end], θ_array[2:end]
         )
     )
 end
@@ -123,7 +123,7 @@ function calculate_lateral_surface_area_of_truncated_cone(r1::R, θ1::R, r2::R, 
     r = r1 * sin(θ1)
     RR = r2 * sin(θ2)
     s = abs(r1 * cos(θ1) - r2 * cos(θ2))
-    return pi * (r+RR) * sqrt((r-RR)^2+s^2)    
+    return pi * (r + RR) * sqrt((r - RR)^2 + s^2)    
 end
 
 """
@@ -132,7 +132,7 @@ end
 function calculate_volume_of_axisymmetric_particle(r_array::AbstractVector{R}, θ_array::AbstractVector{R}) where R <: Real
     return sum(
         calculate_volume_of_truncated_cone.(
-            r_array[1:end-1], θ_array[1:end-1], r_array[2:end], θ_array[2:end]
+            r_array[1:end - 1], θ_array[1:end - 1], r_array[2:end], θ_array[2:end]
         )
     )
 end
@@ -144,7 +144,7 @@ function calculate_volume_of_truncated_cone(r1::R, θ1::R, r2::R, θ2::R) where 
     r = r1 * sin(θ1)
     RR = r2 * sin(θ2)
     s = abs(r1 * cos(θ1) - r2 * cos(θ2))
-    return 1/3 * pi * (r^2 + r*RR + RR^2) * s
+    return 1 / 3 * pi * (r^2 + r * RR + RR^2) * s
 end
 
 """
@@ -152,20 +152,20 @@ end
     following equations in SMARTIES paper: 1. Somerville, W. R. C., Auguié, B. & Le Ru, E. C. Smarties: User-friendly codes for fast and accurate calculations of light scattering by spheroids. J. Quant. Spectrosc. Radiat. Transf. 174, 39–55 (2016).
     verified against results from this area and volume calculator https://planetcalc.com/149/
 """
-function get_volume_area_for_ellipsoid(rx,rz)    
+function get_volume_area_for_ellipsoid(rx, rz)    
     h = rx / rz
     if h < 1; h = 1 / h; end  # h is the aspect ratio that is larger than 1
-    e = sqrt(h ^ 2 - 1) / h
+    e = sqrt(h^2 - 1) / h
 
-    volume = 4 / 3 * pi * rx ^ 2 * rz  # eq. 9
+    volume = 4 / 3 * pi * rx^2 * rz  # eq. 9
     if rx > rz  # oblate
         area_surface = (
-            2 * pi * rx ^ 2 * (1 + ((1 - e ^ 2) / e) * atanh(e))
+            2 * pi * rx^2 * (1 + ((1 - e^2) / e) * atanh(e))
         )  # eq. 11
     elseif rx == rz  # sphere
-        area_surface = 4 * pi * rx ^ 2
+        area_surface = 4 * pi * rx^2
     else  # prolate
-        area_surface = 2 * pi * rx ^ 2 * (1 + rz / (rx * e) * asin(e))  # eq. 11
+        area_surface = 2 * pi * rx^2 * (1 + rz / (rx * e) * asin(e))  # eq. 11
     end
     return volume, area_surface
 end
@@ -176,11 +176,11 @@ function get_volume_area_for_geometry(geometry_name, geometry_parameters...)
     end
 end
 
-function convert_coordinates_Cart2Sph(x,y,z)
+function convert_coordinates_Cart2Sph(x, y, z)
     r = sqrt((x^2) + (y^2) + (z^2))
     theta = atan(sqrt((x^2) + (y^2)), z)
     phi = atan(y, x)
-    return hcat(r,theta,phi)
+    return hcat(r, theta, phi)
 end
 
 function convert_coordinates_Sph2Cart(r, theta, phi)  
@@ -217,7 +217,7 @@ function double_mesh_density(r_array, θ_array)
     z = Tmatrix.create_1D_mesh_and_get_r_n̂(r_array, θ_array)
     r_middles = z[:,1]
     θ_middles = z[:,2]
-    #return hcat(r_middles, θ_middles)
+    # return hcat(r_middles, θ_middles)
 
     """
     r_all = vcat(r_array,r_middles)
@@ -246,6 +246,25 @@ function quadruple_mesh_density(r_array, θ_array)
 end
 
 """
+Increase mesh density by 8x, by dividing every line element into eight equal parts.
+Works only for 1D mesh.
+"""
+function octuple_mesh_density(r_array, θ_array)
+    r_theta_array_quadruple = quadruple_mesh_density(r_array, θ_array)
+    return double_mesh_density(r_theta_array_quadruple[:,1], r_theta_array_quadruple[:,2])
+end
+
+"""
+Increase mesh density by 16x, by dividing every line element into sixteen equal parts.
+Works only for 1D mesh.
+"""
+function sexdecuple_mesh_density(r_array, θ_array)
+    r_theta_array_octuple = octuple_mesh_density(r_array, θ_array)
+    return double_mesh_density(r_theta_array_octuple[:,1], r_theta_array_octuple[:,2])
+end
+
+
+"""
 julia> a = [1,2,3]; b = [10,20];
 julia> add_elements_from_two_arrays_in_turn(a,b)
 julia> 5-element Vector{Int64}:
@@ -256,5 +275,5 @@ julia> 5-element Vector{Int64}:
         3
 """
 function add_elements_from_two_arrays_in_turn(array_1, array_2)
-    return [isodd(i) ? array_1[Int((i+1)/2)] : array_2[Int(i/2)] for i = 1:(length(array_1)+length(array_2))]
+    return [isodd(i) ? array_1[Int((i + 1) / 2)] : array_2[Int(i / 2)] for i = 1:(length(array_1) + length(array_2))]
 end

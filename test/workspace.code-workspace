@@ -17,7 +17,7 @@
 		}
 	],
 	"settings": {
-		"julia.environmentPath": "/data-new/julia_codes/VectorSphericalWaves.jl",
+		"julia.environmentPath": "/data-new/julia_codes/Tmatrix.jl",
 		"cSpell.words": [
 			"sphericalem"
 		]

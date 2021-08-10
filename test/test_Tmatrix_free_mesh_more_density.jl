@@ -102,18 +102,16 @@ function objective_function_normal_mesh_density(r_array)
     # return sum(abs.(T)) # if we need to minimize the sum of all real and imag
     
     # return Tmatrix.get_OrentationAv_scattering_CrossSection_from_Tmatrix(T, Complex(k1_r, k1_i)) # if we need to minimize scattering cross section    
-    
-    
+        
     return 1 * Tmatrix.get_OrentationAv_emissivity_from_Tmatrix(
         T,
         Complex(k1_r, k1_i),
         Tmatrix.calculate_surface_area_of_axisymmetric_particle(r_array, θ_array)
     ) # if we need to minimize emissivity
-    
 end
 
-function objective_function_double_mesh_density(r_array_input)
-    r_θ_array = double_mesh_density(r_array_input, θ_array)
+function objective_function_more_mesh_density(r_array_input)
+    r_θ_array = Tmatrix.double_mesh_density(r_array_input, θ_array)
     r_array_double_density = r_θ_array[:,1]    
     θ_array_double_density = r_θ_array[:,2]    
     ϕ_array_double_density = zeros(size(θ_array_double_density))
@@ -142,8 +140,63 @@ function objective_function_double_mesh_density(r_array_input)
     
 end
 
+
+
+function objective_function_more_mesh_density_using_Eps(r_array_input)
+    if mesh_density_boost == "double"
+        r_θ_array = Tmatrix.double_mesh_density(r_array_input, θ_array)
+    elseif mesh_density_boost == "quadruple"
+        r_θ_array = Tmatrix.quadruple_mesh_density(r_array_input, θ_array)
+    elseif mesh_density_boost == "octuple"
+        r_θ_array = Tmatrix.octuple_mesh_density(r_array_input, θ_array)
+    elseif mesh_density_boost == "sexdecuple"
+        r_θ_array = Tmatrix.sexdecuple_mesh_density(r_array_input, θ_array)
+    else
+        r_θ_array = r_array_input
+    end
+    
+    r_array_double_density = r_θ_array[:,1]    
+    θ_array_double_density = r_θ_array[:,2]    
+    ϕ_array_double_density = zeros(size(θ_array_double_density))
+
+    # println("I am <<objective_function>>, and the type of r_array_double_density is $(typeof(r_array_double_density))")
+    println("r_array_input = $r_array_input")
+    println("r_array_double_density = $r_array_double_density")
+    
+    T = Tmatrix.T_matrix_SeparateRealImag_arbitrary_mesh(
+        n_max, wl_or_freq_input, input_unit, Eps_r_r_1, Eps_r_i_1, Mu_r_r_1, Mu_r_i_1, Eps_r_r_2, Eps_r_i_2, Mu_r_r_2, Mu_r_i_2,
+        (collect(r_array_double_density)), θ_array_double_density, ϕ_array_double_density,
+        rotationally_symmetric, symmetric_about_plane_perpendicular_z, BigFloat_precision
+    )
+    # return abs(T[1]) # if we need to minimize the first element of T-matrix
+    
+    # return sum(abs.(T)) # if we need to minimize the sum of all real and imag
+    
+    # return Tmatrix.get_OrentationAv_scattering_CrossSection_from_Tmatrix(T, Complex(k1_r, k1_i)) # if we need to minimize scattering cross section    
+    if optical_property_tobe_optimized == "emissivity"
+        k1_complex = Tmatrix.get_WaveVector(
+            wl_or_freq_input;
+            input_unit=input_unit,        
+            Eps_r=Complex(Eps_r_r_1, Eps_r_i_1),
+            Mu_r=Complex(Mu_r_r_1, Mu_r_i_1)
+        )
+
+        return 1 * Tmatrix.get_OrentationAv_emissivity_from_Tmatrix(
+            T,
+            k1_complex,
+            Tmatrix.calculate_surface_area_of_axisymmetric_particle(r_array_double_density, θ_array_double_density)
+        ) # if we need to minimize emissivity
+    elseif optical_property_tobe_optimized == "scattering_CrossSection"
+        return Tmatrix.get_OrentationAv_scattering_CrossSection_from_Tmatrix(T, Complex(k1_r, k1_i)) # if we need to minimize scattering cross section    
+    end
+
+end
+
+
+
 # objective_function = objective_function_normal_mesh_density
-objective_function = objective_function_double_mesh_density
+# objective_function = objective_function_more_mesh_density
+objective_function = objective_function_more_mesh_density_using_Eps
 
 function ∂objective_function(r_array)
     # println("I am <<∂objective_function>>, and the type of r_array is $(typeof(r_array))")
@@ -152,10 +205,21 @@ function ∂objective_function(r_array)
 end
 
 using Plots
-n_max = 2
-n_θ_points = 20
+
+wl_or_freq_input = 1e-6; input_unit = "m"
+n_max = 1
+Eps_r_r_1 = 1.0; Eps_r_i_1 = 0.0
+Eps_r_r_2 = 1.5; Eps_r_i_2 = 0.01
+Mu_r_r_1 = 1.0; Mu_r_i_1 = 0.0
+Mu_r_r_2 = 1.0; Mu_r_i_2 = 0.0
+
+optical_property_tobe_optimized = "scattering_CrossSection" # can be any member of this list: ["emissivity", "scattering_CrossSection"]
+maximize_or_minimize = "maximize"
+mesh_density_boost = "quadruple" # by how many we need to add more points between each two consecutive points defining the particle surface. Can be any of ["double", "quadruple", "octuple", "sexdecuple"]
+n_max = 1
+n_θ_points = 5
 θ_array = collect(LinRange(1e-6, pi, n_θ_points))
-r_array_initial, _ = Tmatrix.ellipsoid(0.1e-7, 0.12e-7, θ_array)
+r_array_initial, _ = Tmatrix.ellipsoid(0.1e-7, 0.11e-7, θ_array)
 # r_array_initial = 0.1e-7 * ones(size(θ_array))
 r_array = r_array_initial
 ϕ_array = zeros(size(θ_array))
@@ -164,7 +228,7 @@ rotationally_symmetric = true
 symmetric_about_plane_perpendicular_z = false
 BigFloat_precision = nothing
 
-learning_rate = 0.5e-18
+learning_rate = 0.5e-1
 # learning_rate = 1e-2
 global loss_here = -1e6
 global ∂loss = 0
@@ -172,9 +236,18 @@ println("Starting optimization for T-matrix")
 global n_iteration = 0
 loss_array = []
 loss_old = 9999999999999
-while (n_iteration < 50) # (loss_here < 0)
+
+directory_name_to_save_plots = "cache/iteration_particle_plots/$(maximize_or_minimize)_$(optical_property_tobe_optimized)_07_27_2021_$(mesh_density_boost)_mesh_density_learning_rate_$(learning_rate)__D_0.2e-7_nmax_$(n_max)"
+mkpath(directory_name_to_save_plots)
+
+while (n_iteration < 500) # (loss_here < 0)
     n_iteration += 1
-    r_array = r_array .- learning_rate .* ∂loss    
+
+    if maximize_or_minimize == "maximize"
+        r_array = r_array .+ learning_rate .* ∂loss    
+    else
+        r_array = r_array .- learning_rate .* ∂loss        
+    end
     
     loss_here = objective_function(r_array)
     ∂loss = ∂objective_function(r_array)   
@@ -184,18 +257,24 @@ while (n_iteration < 50) # (loss_here < 0)
     println("iteration #$n_iteration: loss_here = $loss_here, ∂loss = $∂loss")
     println("r_array = $r_array")
 
+    println()
+    println("loss_array=$loss_array")
     xyz = vcat(Tmatrix.convert_coordinates_Sph2Cart.(r_array, θ_array, zeros(size(r_array)))...)
     p1 = plot(xyz_initial[:,1], xyz_initial[:,3], aspect_ratio=:equal, label="initial particle")
     p1 = plot!(xyz[:,1], xyz[:,3], aspect_ratio=:equal, label="particle after $n_iteration iterations", title="scattering cross section = $loss_here m")
     p2 = plot(1:length(loss_array), loss_array, xlabel="iteration #", ylabel="scattering cross section (m)")
     fig = plot(p1, p2, layout=(1, 2), size=(1200, 800))
+
+    figure_name = joinpath(directory_name_to_save_plots, "particle_geom_iteration_$n_iteration.png")    
+
     savefig(
         fig,
-        "cache/iteration_particle_plots/maximizing_emissivity_07_12_2021__/particle_geom_iteration_$n_iteration.png"
+        figure_name
     )
     # if (loss_here - loss_old) < 1e-6; break; end
     loss_old = loss_here
 end
+
 
 # trying JuMP with cos
 using JuMP

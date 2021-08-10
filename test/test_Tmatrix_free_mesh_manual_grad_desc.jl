@@ -1,13 +1,13 @@
 using Tmatrix
 using Zygote
 
-function objective_function(r_array_input,θ_array_input)    
-    #println(r_array)
-    #println("I am <<objective_function>>, and the type of r_array is $(typeof(r_array))")
-    #println("r_array = $r_array")
+function objective_function(r_array_input, θ_array_input)    
+    # println(r_array)
+    # println("I am <<objective_function>>, and the type of r_array is $(typeof(r_array))")
+    # println("r_array = $r_array")
     
     # quadrupling_mesh
-    r_θ_array = Tmatrix.quadruple_mesh_density(r_array_input,θ_array_input)
+    r_θ_array = Tmatrix.quadruple_mesh_density(r_array_input, θ_array_input)
     r_array = r_θ_array[:,1]
     θ_array = r_θ_array[:,2]
     println(r_array)
@@ -22,17 +22,17 @@ function objective_function(r_array_input,θ_array_input)
     k1_complex = Tmatrix.get_WaveVector(
         wl_or_freq_input;
         input_unit=input_unit,        
-        Eps_r = Complex(Eps_r_r_1, Eps_r_i_1),
-        Mu_r = Complex(Mu_r_r_1, Mu_r_i_1)
+        Eps_r=Complex(Eps_r_r_1, Eps_r_i_1),
+        Mu_r=Complex(Mu_r_r_1, Mu_r_i_1)
     )
     # return abs(T[1]) # if we need to minimize the first element of T-matrix
     
     # return sum(abs.(T)) # if we need to minimize the sum of all real and imag
     
-    return Tmatrix.get_OrentationAv_scattering_CrossSections_from_Tmatrix(T, k1_complex) # if we need to minimize scattering cross section    
+    return Tmatrix.get_OrentationAv_scattering_CrossSection_from_Tmatrix(T, k1_complex) # if we need to minimize scattering cross section    
     
     """
-    return -1 * Tmatrix.get_OrentationAv_emissivity_CrossSections_from_Tmatrix(
+    return -1 * Tmatrix.get_OrentationAv_emissivity_from_Tmatrix(
         T,
         Complex(k1_r, k1_i),
         Tmatrix.calculate_surface_area_of_axisymmetric_particle(r_array, θ_array)
@@ -41,8 +41,8 @@ function objective_function(r_array_input,θ_array_input)
 end
 
 function ∂objective_function(r_array, θ_array)    
-    #println("I am <<∂objective_function>>, and the type of r_array is $(typeof(r_array))")
-    #println("r_array = $r_array")    
+    # println("I am <<∂objective_function>>, and the type of r_array is $(typeof(r_array))")
+    # println("r_array = $r_array")    
     return Zygote.gradient(r_array -> objective_function(r_array, θ_array), (collect(r_array)))[1]
 end
 
@@ -55,8 +55,8 @@ Mu_r_r_1 = 1.0; Mu_r_i_1 = 0.0
 Mu_r_r_2 = 1.0; Mu_r_i_2 = 0.0
 
 n_θ_points = 10
-θ_array = collect(LinRange(1e-6, pi-1e-6, n_θ_points))
-r_array = 0.5*wl_or_freq_input * ones(size(θ_array))
+θ_array = collect(LinRange(1e-6, pi - 1e-6, n_θ_points))
+r_array = 0.5 * wl_or_freq_input * ones(size(θ_array))
 rotationally_symmetric = true
 symmetric_about_plane_perpendicular_z = false
 BigFloat_precision = nothing
@@ -74,8 +74,8 @@ while (n_iteration < 50) # (loss_here < 0)
     n_iteration += 1
     r_array = r_array .- learning_rate .* ∂loss    
     
-    loss_here = objective_function(r_array,θ_array)
-    ∂loss = ∂objective_function(r_array,θ_array)   
+    loss_here = objective_function(r_array, θ_array)
+    ∂loss = ∂objective_function(r_array, θ_array)   
     append!(loss_array, loss_here) 
 
     println()
