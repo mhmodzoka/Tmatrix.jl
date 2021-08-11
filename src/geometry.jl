@@ -28,7 +28,7 @@ function create_array_from_elements(x1, x2, x3)
 end
 
 """
-    Claculate radial coordinate of ellipsoidal particle surface, given θ points
+    Calculate radial coordinate of ellipsoidal particle surface, given θ points
 returns r and n̂ coordinate as a function of θ_array
 """
 function ellipsoid(rx, rz, θ_array)    
