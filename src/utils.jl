@@ -35,6 +35,7 @@ end
     Create meshgrid of θ and ϕ
 """
 function meshgrid_θ_ϕ(n_θ_points, n_ϕ_points; min_θ=1e-16, min_ϕ=1e-16, rotationally_symmetric=false)
+    #TODO can avoid min values w full algebra
     θ_1D_array = LinRange(min_θ, π, n_θ_points);
     ϕ_1D_array = LinRange(min_ϕ, 2π, n_ϕ_points);
     if rotationally_symmetric

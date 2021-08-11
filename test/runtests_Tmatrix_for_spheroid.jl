@@ -14,7 +14,7 @@ BigFloat_precision_list = 2 .^ [6,7,8,9]
 
 println("***************************************************************")
 println("***************************************************************")
-println("Claculating T-matrix using Complex numbers")
+println("Calculating T-matrix using Complex numbers")
 println("***************************************************************")
 println("***************************************************************")
 
@@ -48,7 +48,7 @@ println()
 println()
 println("***************************************************************")
 println("***************************************************************")
-println("Claculating T-matrix using real numbers")
+println("Calculating T-matrix using real numbers")
 println("***************************************************************")
 println("***************************************************************")
 

@@ -449,6 +449,10 @@ end
 
 """
     allowing BigFloat_precision
+    k1_i: imaginary part of outside wave vector
+    k1_r: real part
+    k2_i: imaginary part of inside wave vector
+    k2_r: real part
 """
 function T_matrix_SeparateRealImag(
         n_max::Int, k1_r::R, k1_i::R, k2_r::R, k2_i::R,
@@ -492,7 +496,7 @@ function T_matrix_SeparateRealImag_arbitrary_mesh(
         n̂_array = reshape([Vector([n̂_r_comp[id], n̂_θ_comp[id], n̂_ϕ_comp[id]]) for id in eachindex(n̂_r_comp)], size(n̂_r_comp))
         # println("rotationally symmetric T-matrix calculation for arbitrary mesh is starting ...")
     else
-        println("I need to code it!")
+        println("I need to code it!") #TODO code it
     end
     
     return T_matrix_SeparateRealImag(
@@ -574,7 +578,6 @@ function calculate_Tmatrix_for_spheroid_SeparateRealImag(
     
     # calculate r and n̂ for the geometry
     r_array, n̂_array = ellipsoid(rx, rz, θ_array);
-    
     # calculate T-matrix
     T = T_matrix_SeparateRealImag(
         n_max, k1_r, k1_i, k2_r, k2_i, r_array, θ_array, ϕ_array, n̂_array,
