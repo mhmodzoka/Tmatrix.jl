@@ -220,6 +220,7 @@ end
     1D numerical integral using trapezoidal rule
 x and y are 1D arrays
 """
+#TODO rename to not elzouka lol
 function trapz_ELZOUKA(x::AbstractVector{R}, y::AbstractVector{N}) where {R <: Real,N <: Number}
     # TODO: small error if compared with Trapz.trapz
     base = x[2:end] - x[1:end - 1]
