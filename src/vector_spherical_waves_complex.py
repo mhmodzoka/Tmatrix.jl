@@ -1,5 +1,5 @@
 from numpy import complex128
-import VSW_utils
+import VSW_utils as vswu
 import jax.numpy as np
 
 #############################################################################################
@@ -9,10 +9,10 @@ import jax.numpy as np
 I assume each of m, n, θ is a single number
 """
 def B_mn_of_θ(m: int, n: int, θ: np.float64): # where {R <: Real, I <: Integer}
-    return vcat(
+    return np.vstack(
         0, #replacing zero(θ), if θ is a single number that should b                  # r-component
-        τₘₙ(m, n, θ),      # θ-component
-        im * πₘₙ(m, n, θ)  # ϕ-component
+        vswu.τₘₙ(m, n, θ),      # θ-component
+        1j * vswu.πₘₙ(m, n, θ)  # ϕ-component
     ) # equation C.19
 
 
@@ -26,8 +26,8 @@ def B_mn_of_θ_SVector(m: int, n: int, θ: np.float64): # where {R <: Real, I <:
     """
     return SVector(
         0, #replacing zero(θ), if θ is a single number that should b                  # r-component
-        τₘₙ(m, n, θ),      # θ-component
-        im * πₘₙ(m, n, θ)  # ϕ-component
+        vswu.τₘₙ(m, n, θ),      # θ-component
+        1j * vswu.πₘₙ(m, n, θ)  # ϕ-component
     ) # equation C.19
 
 
@@ -36,10 +36,10 @@ def B_mn_of_θ_SVector(m: int, n: int, θ: np.float64): # where {R <: Real, I <:
 I assume each of m, n, θ is a single number
 """
 def C_mn_of_θ(m: int, n: int, θ: np.float64): # where {R <: Real, I <: Integer}    
-    return vcat(
+    return np.vstack(
         0, #replacing zero(θ), if θ is a single number that should b                  # r-component
-        im * πₘₙ(m, n, θ), # θ-component
-        -1 * τₘₙ(m, n, θ),    # ϕ-component
+        1j * vswu.πₘₙ(m, n, θ), # θ-component
+        -1 * vswu.τₘₙ(m, n, θ),    # ϕ-component
     ) # equation C.20
 
 
@@ -50,8 +50,8 @@ I assume each of m, n, θ is a single number
 def C_mn_of_θ_SVector(m: int, n: int, θ: np.float64): # where {R <: Real, I <: Integer}   
     return SVector(
         0, #replacing zero(θ), if θ is a single number that should b                  # r-component
-        im * πₘₙ(m, n, θ), # θ-component
-        -1 * τₘₙ(m, n, θ),    # ϕ-component
+        1j * y(m, n, θ), # θ-component
+        -1 * vswu.τₘₙ(m, n, θ),    # ϕ-component
     ) # equation C.20
 
 
@@ -62,7 +62,7 @@ def C_mn_of_θ_SVector(m: int, n: int, θ: np.float64): # where {R <: Real, I <:
 def P_mn_of_θ(m: int, n: int, θ: np.float64): # where {R <: Real, I <: Integer}
     # TODO @Alok, should I replace arrays with SMatrix? what are the drawbacks?
     # TODO: replace "0" with zero(type)
-    return vcat(
+    return np.vstack(
         wignerdjmn(n, 0, m, θ), # r-component
         0, #replacing zero(θ), if θ is a single number that should b                # θ-component
         0, #replacing zero(θ), if θ is a single number that should b                # ϕ-component
@@ -84,27 +84,27 @@ def P_mn_of_θ_SVector(m: int, n: int, θ: np.float64): # where {R <: Real, I <:
 
 # calculate B(θ,ϕ), C(θ,ϕ), P(θ,ϕ), returns Array
 def B_mn_of_θ_ϕ(m: int, n: int, θ: np.float64, ϕ: np.float64): # where {R <: Real, I <: Integer}
-    return (-1)^m * convert(R, sqrt_factorial_n_plus_m_over_factorial_n_minus_m(m, n)) * B_mn_of_θ(m, n, θ) * exp(im * m * ϕ) # equation C.16
+    return (-1)^m * convert(R, sqrt_factorial_n_plus_m_over_factorial_n_minus_m(m, n)) * B_mn_of_θ(m, n, θ) * exp(1j * m * ϕ) # equation C.16
 
 
 def C_mn_of_θ_ϕ(m: int, n: int, θ: np.float64, ϕ: np.float64): # where {R <: Real, I <: Integer}
-    return (-1)^m * convert(R, sqrt_factorial_n_plus_m_over_factorial_n_minus_m(m, n)) * C_mn_of_θ(m, n, θ) * exp(im * m * ϕ) # equation C.17
+    return (-1)^m * convert(R, sqrt_factorial_n_plus_m_over_factorial_n_minus_m(m, n)) * C_mn_of_θ(m, n, θ) * exp(1j * m * ϕ) # equation C.17
 
 
 def P_mn_of_θ_ϕ(m: int, n: int, θ: np.float64, ϕ: np.float64): # where {R <: Real, I <: Integer}
-    return (-1)^m * convert(R, sqrt_factorial_n_plus_m_over_factorial_n_minus_m(m, n)) * P_mn_of_θ(m, n, θ) * exp(im * m * ϕ) # equation C.18
+    return (-1)^m * convert(R, sqrt_factorial_n_plus_m_over_factorial_n_minus_m(m, n)) * P_mn_of_θ(m, n, θ) * exp(1j * m * ϕ) # equation C.18
 
 # calculate B(θ,ϕ), C(θ,ϕ), P(θ,ϕ), returns SVector
 def B_mn_of_θ_ϕ_SVector(m: int, n: int, θ: np.float64, ϕ: np.float64): # where {R <: Real, I <: Integer}
-    return (-1)^m * convert(R, sqrt_factorial_n_plus_m_over_factorial_n_minus_m(m, n)) * B_mn_of_θ_SVector(m, n, θ) * exp(im * m * ϕ) # equation C.16
+    return (-1)^m * convert(R, sqrt_factorial_n_plus_m_over_factorial_n_minus_m(m, n)) * B_mn_of_θ_SVector(m, n, θ) * exp(1j * m * ϕ) # equation C.16
 
 
 def C_mn_of_θ_ϕ_SVector(m: int, n: int, θ: np.float64, ϕ: np.float64): # where {R <: Real, I <: Integer}
-    return (-1)^m * convert(R, sqrt_factorial_n_plus_m_over_factorial_n_minus_m(m, n)) * C_mn_of_θ_SVector(m, n, θ) * exp(im * m * ϕ) # equation C.17
+    return (-1)^m * convert(R, sqrt_factorial_n_plus_m_over_factorial_n_minus_m(m, n)) * C_mn_of_θ_SVector(m, n, θ) * exp(1j * m * ϕ) # equation C.17
 
 
 def P_mn_of_θ_ϕ_SVector(m: int, n: int, θ: np.float64, ϕ: np.float64): # where {R <: Real, I <: Integer}
-    return (-1)^m * convert(R, sqrt_factorial_n_plus_m_over_factorial_n_minus_m(m, n)) * P_mn_of_θ_SVector(m, n, θ) * exp(im * m * ϕ) # equation C.18
+    return (-1)^m * convert(R, sqrt_factorial_n_plus_m_over_factorial_n_minus_m(m, n)) * P_mn_of_θ_SVector(m, n, θ) * exp(1j * m * ϕ) # equation C.18
 
 
 # calculate (Rg)M(kr,θ,ϕ), (Rg)N(kr,θ,ϕ), returns Array

@@ -1,4 +1,6 @@
 import jax.numpy as np
+import jax
+import bessel
 
 """
     Dirac delta function
@@ -12,7 +14,7 @@ def wignerdjmn(s: int, m: int, n: int, θ: np.float64): #where {R <: Real, I <: 
     # println("s=$s, m=$m, n=$n, θ=$θ")
     if θ == 0: #replacing zero(θ), if θ is a single number that should work # TODO: make the zero the same type of θ. e.g., 0
         d = δ(m, n)
-    elif θ == π:
+    elif θ == np.pi:
         d = (-1)^(s - n) * δ(-n, m)
     else:
         d = 0, #replacing zero(θ), if θ is a single number that should work
@@ -24,24 +26,24 @@ def wignerdjmn(s: int, m: int, n: int, θ: np.float64): #where {R <: Real, I <: 
             # TODO: find a better way to detect when do we need to use big integers
             if (
                 (max(k_max, s + m - k_max, s - n - k_max, n - m + k_max, s + abs(m), s + abs(n)) >= 21) or
-                ((factorial(s + m) * factorial(s - m) * factorial(s + n) * factorial(s - n)) < 0) or
-                ((factorial(k_max) * factorial(s + m - k_max) * factorial(s - n - k_max) * factorial(n - m + k_max)) < 0)
+                ((np.factorial(s + m) * np.factorial(s - m) * np.factorial(s + n) * np.factorial(s - n)) < 0) or
+                ((np.factorial(k_max) * np.factorial(s + m - k_max) * np.factorial(s - n - k_max) * np.factorial(n - m + k_max)) < 0)
             ):
-                s = big(s); m = big(m); n = big(n)            
+                #s = big(s); m = big(m); n = big(n)     TODO make bigfloats work       
                 k_max = min(s + m, s - n)
             for k in range(k_min, k_max+1):
-                d += (-1)^k * (cos(θ / 2)^(2*s - 2*k + m - n) * sin(θ / 2)^(2*k - m + n)) / (factorial(k) * factorial(s + m - k) * factorial(s - n - k) * factorial(n - m + k))
+                d += (-1)^k * (np.cos(θ / 2)^(2*s - 2*k + m - n) * np.sin(θ / 2)^(2*k - m + n)) / (np.factorial(k) * np.factorial(s + m - k) * np.factorial(s - n - k) * np.factorial(n - m + k))
             
-            d = d*sqrt(factorial(s + m) * factorial(s - m) * factorial(s + n) * factorial(s - n))
-            return convert(typeof(θ), d)
+            d = d*np.sqrt(np.factorial(s + m) * np.factorial(s - m) * np.factorial(s + n) * np.factorial(s - n))
+            return d.astype(θ)
         else: # wigner-d is zero if there is any negative factorial
             return 0, #replacing zero(θ), if θ is a single number that should work
         
-    return convert(typeof(θ), d)
+    return d.astype(θ)
 """
 derivative of wigner-d with resepect to θ. Adopted from eq. B.25 from Mishchenko, M.I., Travis, L.D., and Lacis, A.A. (2002). Scattering, absorption, and emission of light by small particles (Cambridge University Press).
 """
-def dwignerdjmn_dtheta(s: int, m: int, n: int, θ: np.float64, numerical_derivative=false, verysmallnumber=1e-30): #where {R <: Real, I <: Integer}
+def dwignerdjmn_dtheta(s: int, m: int, n: int, θ: np.float64, numerical_derivative=False, verysmallnumber=1e-30): #where {R <: Real, I <: Integer}
     if numerical_derivative:
         return (wignerdjmn(s, m, n, θ + verysmallnumber) - wignerdjmn(s, m, n, θ - verysmallnumber)) / (verysmallnumber * 2)
     else:
@@ -51,9 +53,9 @@ def dwignerdjmn_dtheta(s: int, m: int, n: int, θ: np.float64, numerical_derivat
         #catch
         #println("I am dwignerdjmn_dtheta, s=$s; m=$m; n=$n")
         if s >= n:
-            return -1 * (Zygote.dropgrad(m - n) * cos(θ)) / sin(θ) * wignerdjmn(s, m, n, θ) - Zygote.dropgrad(sqrt((s - n) * (s + n + 1))) * wignerdjmn(s, m, n + 1, θ) # second line of equation B.25
+            return -1 * (jax.lax.stop_gradient(m - n) * np.cos(θ)) / np.sin(θ) * wignerdjmn(s, m, n, θ) - jax.lax.stop_gradient(np.sqrt((s - n) * (s + n + 1))) * wignerdjmn(s, m, n + 1, θ) # second line of equation B.25
         else: # the second part is zero. TODO: Is there a more elegent way to do it? using short circuit for example?
-            return -1 * (Zygote.dropgrad(m - n) * cos(θ)) / sin(θ) * wignerdjmn(s, m, n, θ) # second line of equation B.25
+            return -1 * (jax.lax.stop_gradient(m - n) * np.cos(θ)) / np.sin(θ) * wignerdjmn(s, m, n, θ) # second line of equation B.25
       
     
 
@@ -67,7 +69,7 @@ def dwignerdjmn_dtheta(s: int, m: int, n: int, θ: np.float64, numerical_derivat
 
 
 def πₘₙ(m: int, n: int, θ: np.float64):# where {R <: Real, I <: Integer}
-    return jax.stop_grad(m) / sin(θ) * wignerdjmn(n, 0, m, θ)
+    return jax.stop_grad(m) / np.sin(θ) * wignerdjmn(n, 0, m, θ)
 
 def τₘₙ(m: int, n: int, θ: np.float64):# where {R <: Real, I <: Integer}
     return dwignerdjmn_dtheta(n, 0, m, θ)
@@ -78,14 +80,14 @@ def sqrt_factorial_n_plus_m_over_factorial_n_minus_m(m: int, n: int):
     total = 1
     for i in range (2*m):
         total = total*((n+m)-i)
-    return(sqrt(total))
+    return(np.sqrt(total))
 
     #definitely worse: mahmoud's original method
 
     # if n + abs(m) > 20 # Is there a better way to do it? I did it because factorial fails for input of type Int that is larger than 20
     #     m = big(m); n = big(n)
     # end 
-    # return Zygote.dropgrad(
+    # return jax.lax.stop_gradient(
     #     sqrt(factorial(n + m) / factorial(n - m))
     # )
 
