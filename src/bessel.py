@@ -30,7 +30,7 @@ def recurrence_relation_spherical_bessel(n: int, x, bessel_n_minus_1, bessel_n_m
     Calculate spherical Bessel function, given the Bessel functions at n=0 and n=1
 Works for ALL spherical Bessel functions
 """
-def spherical_Bessel_n_ELZOUKA(n: int, x, bessel_0, bessel_1): #where NN <: Number
+def spherical_Bessel_n(n: int, x, bessel_0, bessel_1): #where NN <: Number
     if n == 0:
         return bessel_0
     elif n == 1:
@@ -58,7 +58,7 @@ def spherical_Bessel_n_ELZOUKA(n: int, x, bessel_0, bessel_1): #where NN <: Numb
     Spherical Bessel def of the first kind, at n=0
 from http://dlmf.nist.gov/10.49.E3
 """
-def spherical_Bessel_j_0_ELZOUKA(x): #where NN <: Number
+def spherical_Bessel_j_0(x): #where NN <: Number
     return np.sin(x)/x
 
 
@@ -66,22 +66,22 @@ def spherical_Bessel_j_0_ELZOUKA(x): #where NN <: Number
     Spherical Bessel def of the first kind, at n=1
 from http://dlmf.nist.gov/10.49.E3
 """
-def spherical_Bessel_j_1_ELZOUKA(x): #where NN <: Number
+def spherical_Bessel_j_1(x): #where NN <: Number
     return np.sin(x)/(x^2) - np.cos(x)/x
 
 
 """
     Spherical Bessel def of the first kind, using recurrence relation
 """
-def spherical_Bessel_j_n_ELZOUKA(n: int, x): #where NN <: Number
+def spherical_Bessel_j_n(n: int, x): #where NN <: Number
     if n == 0:
-        return spherical_Bessel_j_0_ELZOUKA(x)
+        return spherical_Bessel_j_0(x)
     elif n == 1:
-        return spherical_Bessel_j_1_ELZOUKA(x)
+        return spherical_Bessel_j_1(x)
     else:
-        bessel_0 = spherical_Bessel_j_0_ELZOUKA(x)
-        bessel_1 = spherical_Bessel_j_1_ELZOUKA(x)
-        return spherical_Bessel_n_ELZOUKA(n, x, bessel_0, bessel_1)
+        bessel_0 = spherical_Bessel_j_0(x)
+        bessel_1 = spherical_Bessel_j_1(x)
+        return spherical_Bessel_n(n, x, bessel_0, bessel_1)
     
 
 
@@ -90,7 +90,7 @@ def spherical_Bessel_j_n_ELZOUKA(n: int, x): #where NN <: Number
     Spherical Bessel def of the second kind, at n=0
 from http://dlmf.nist.gov/10.49.E5
 """
-def spherical_Bessel_y_0_ELZOUKA(x): #where NN <: Number
+def spherical_Bessel_y_0(x): #where NN <: Number
     return -np.cos(x)/x
 
 
@@ -98,20 +98,20 @@ def spherical_Bessel_y_0_ELZOUKA(x): #where NN <: Number
     Spherical Bessel def of the second kind, at n=1
 from http://dlmf.nist.gov/10.49.E5
 """
-def spherical_Bessel_y_1_ELZOUKA(x): #where NN <: Number
+def spherical_Bessel_y_1(x): #where NN <: Number
     return -np.cos(x)/(x^2) - np.sin(x)/x
 
 
 """
     Spherical Bessel def of the second kind, using recurrence relation
 """
-def spherical_Bessel_y_n_ELZOUKA(n: int, x): #where NN <: Number
+def spherical_Bessel_y_n(n: int, x): #where NN <: Number
     if n == 0:
-        return spherical_Bessel_y_0_ELZOUKA(x)
+        return spherical_Bessel_y_0(x)
     elif n == 1:
-        return spherical_Bessel_y_1_ELZOUKA(x)
+        return spherical_Bessel_y_1(x)
     else:
-        bessel_0 = spherical_Bessel_y_0_ELZOUKA(x)
-        bessel_1 = spherical_Bessel_y_1_ELZOUKA(x)
-        return spherical_Bessel_n_ELZOUKA(n, x, bessel_0, bessel_1)
+        bessel_0 = spherical_Bessel_y_0(x)
+        bessel_1 = spherical_Bessel_y_1(x)
+        return spherical_Bessel_n(n, x, bessel_0, bessel_1)
     

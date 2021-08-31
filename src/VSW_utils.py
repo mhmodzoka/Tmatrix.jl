@@ -93,14 +93,17 @@ def sqrt_factorial_n_plus_m_over_factorial_n_minus_m(m: int, n: int):
 
 #TODO spherical Bessel
 
-spherical_Bessel_j_n = None #TODO
-spherical_Hankel_h1_n = None #TODO
+def spherical_Hankel_h1_n(n: int, x): #where {NN <: Number, I <: Integer}
+    """
+    Spherical Hankel function of the first kind. It can be calculated from spherical Bessel functions of the first and second kinds as in the code:
+    """
+    return bessel.spherical_Bessel_j_n(n, x) + 1j * bessel.spherical_Bessel_y_n(n, x)
 
 """return the radial def that is appropriate with the type of VSWF
 """
 def get_radial_function_and_special_derivative_given_kind(kind):
     if kind in ["regular", "incoming", 1]:
-        radial_function = spherical_Bessel_j_n #this gets weird, I'm leaving
+        radial_function = bessel.spherical_Bessel_j_n #this gets weird, I'm leaving
         radial_function_special_derivative = d_bessel_1_x_over_x
     elif kind in ["irregular", "outgoing", 2]:
         radial_function = spherical_Hankel_h1_n
@@ -115,7 +118,7 @@ def d_bessel_1_x_over_x(n: int, x): #where {NN <: Number, I <: Integer}
     """
     Derivative of (spherical Bessel of first kind * x) divided by x
     """
-    return (spherical_Bessel_j_n(n - 1, x) - n / x * spherical_Bessel_j_n(n, x))
+    return (bessel.spherical_Bessel_j_n(n - 1, x) - n / x * bessel.spherical_Bessel_j_n(n, x))
 
 def d_hankel_1_x_over_x(n: int, x): #where {NN <: Number, I <: Integer}
     """
@@ -127,4 +130,4 @@ def d_bessel_2_x_over_x(n: int, x):  #where {NN <: Number, I <: Integer}
     """
     Derivative of (spherical Bessel of second kind * x) divided by x
     """
-    return (spherical_Bessel_y_n(n - 1, x) - n / x * spherical_Bessel_y_n(n, x))
+    return (bessel.spherical_Bessel_y_n(n - 1, x) - n / x * bessel.spherical_Bessel_y_n(n, x))
