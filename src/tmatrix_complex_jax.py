@@ -31,7 +31,7 @@ M_mn_wave_array_ : M_mn_wave with shape same as any of kr_array, θ_array, ϕ_ar
 def M_mn_wave_array(
         m: int, n: int, kr_array: AbstractVecOrMat{<:Complex{<:Real}}, θ_array: AbstractVecOrMat{R},
         ϕ_array: AbstractVecOrMat{R}; kind="regular"
-    ) where {R <: Real}
+    ): #where R <: Real
     # Alok way is faster indeed!
     # TODO: @Alok, I think if we use boradcast it would be faster. I think avoiding preallocation makes the code cleaner and faster
     M_mn_wave_array_ = (lambda _ : zero(SVector{3,Complex})).(kr_array)
@@ -56,7 +56,7 @@ N_mn_wave_array_ : N_mn_wave with shape same as any of kr_array, θ_array, ϕ_ar
 def N_mn_wave_array(
         m: int, n: int, kr_array: AbstractVecOrMat{<:Complex{<:Real}}, θ_array: AbstractVecOrMat{R},
         ϕ_array: AbstractVecOrMat{R}; kind="regular"
-    ) where {R <: Real}
+    ): #where {R <: Real}
     # Alok way
     N_mn_wave_array_ = (_ -> zero(SVector{3,Complex})).(kr_array)
     for idx in eachindex(kr_array)
@@ -89,7 +89,7 @@ def J_mn_m_n__integrand(
         k1r_array: AbstractVecOrMat{C}, k2r_array: AbstractVecOrMat{C},
         r_array: AbstractVecOrMat{R}, θ_array: AbstractVecOrMat{R}, ϕ_array: AbstractVecOrMat{R}, n̂_array: Any; # TODO: I don't know why I get an error when I use n̂_array: AbstractVecOrMat{Vector{Float64}}
         kind="regular", J_superscript=11
-    ) where {R <: Real, C <: Complex{R}}
+    ): #where {R <: Real, C <: Complex{R}}
 
     
     # determining the type of the first the second VSWF
@@ -143,7 +143,7 @@ def J_mn_m_n__integrand_SVector(
     k1r_array: AbstractVecOrMat{C}, k2r_array: AbstractVecOrMat{C},
     r_array: AbstractVecOrMat{R}, θ_array: AbstractVecOrMat{R}, ϕ_array: AbstractVecOrMat{R}, n̂_array: Any; # TODO: I don't know why I get an error when I use n̂_array: AbstractVecOrMat{Vector{Float64}}
     kind="regular", J_superscript=11
-) where {R <: Real, C <: Complex{R}}
+): #where {R <: Real, C <: Complex{R}}
 
 
 # determining the type of the first the second VSWF
@@ -193,7 +193,7 @@ def J_mn_m_n_(
         k1r_array: AbstractVecOrMat{C}, k2r_array: AbstractVecOrMat{C},
         r_array: AbstractVecOrMat{R}, θ_array: AbstractVecOrMat{R}, ϕ_array: AbstractVecOrMat{R}, n̂_array: Any; # TODO: I don't know why I get an error when I use n̂_array: AbstractVecOrMat{Vector{Float64}}
         kind="regular", J_superscript=11, rotationally_symmetric=False,
-    ) where {R <: Real, C <: Complex{R}}
+    ): #where {R <: Real, C <: Complex{R}}
     if rotationally_symmetric
         # make sure that θ_array is 1D
         if len(size(θ_array)) != 1
@@ -236,7 +236,7 @@ def Q_mn_m_n_(
         k1r_array: AbstractVecOrMat{C}, k2r_array: AbstractVecOrMat{C},
         r_array: AbstractVecOrMat{R}, θ_array: AbstractVecOrMat{R}, ϕ_array: AbstractVecOrMat{R}, n̂_array: Any; # TODO: I don't know why I get an error when I use n̂_array: AbstractVecOrMat{Vector{Float64}}
         kind="regular", Q_superscript=11, rotationally_symmetric=False,
-    ) where {R <: Real, C <: Complex{R}}
+    ): #where {R <: Real, C <: Complex{R}}
     if Q_superscript == 11; J_superscript_1 = 21 ; J_superscript_2 = 12
     elif Q_superscript == 12; J_superscript_1 = 11 ; J_superscript_2 = 22
     elif Q_superscript == 21; J_superscript_1 = 22 ; J_superscript_2 = 11
@@ -258,7 +258,7 @@ def Q_matrix(
         r_array: AbstractVecOrMat{R}, θ_array: AbstractVecOrMat{R}, ϕ_array: AbstractVecOrMat{R}, n̂_array: Any; # TODO: I don't know why I get an error when I use n̂_array: AbstractVecOrMat{Vector{Float64}}
         kind="regular", rotationally_symmetric=False, symmetric_about_plane_perpicular_z=False,
         verbose=False,
-    ) where {R <: Real, C <: Complex{R}}
+    ): #where {R <: Real, C <: Complex{R}}
     idx_max = get_max_single_index_from_n_max(n_max)
     Q_mn_m_n_11 = zeros(type(k1), idx_max, idx_max) # TODO: @Alok, should I replace arrays with SMatrix? I am afraid it may get slower, as I have seen that StaticArray may get slower for arrays larger than 100 elements
     Q_mn_m_n_12 = zeros(type(k1), idx_max, idx_max)
@@ -328,7 +328,7 @@ def T_matrix(
         r_array: AbstractVecOrMat{R}, θ_array: AbstractVecOrMat{R}, ϕ_array: AbstractVecOrMat{R}, n̂_array: Any; # TODO: I don't know why I get an error when I use n̂_array: AbstractVecOrMat{Vector{Float64}}
         rotationally_symmetric=False, symmetric_about_plane_perpendicular_z=False, HDF5_filename=None,
         verbose=False, create_new_arrays=False, BigFloat_precision = None
-    ) where {R <: Real, C <: Complex{R}}
+    ): #where {R <: Real, C <: Complex{R}}
 
     if BigFloat_precision != None:
         def T_matrix_BigFloat(n_max, big(k1), big(k2), big.(k1r_array), big.(k2r_array), big.(r_array), big.(θ_array), big.(ϕ_array), [big.(n) for n in n̂_array];
@@ -376,7 +376,7 @@ def calculate_Tmatrix_for_spheroid(
         n_θ_points=10, n_ϕ_points=20, HDF5_filename=None,
         rotationally_symmetric=False, symmetric_about_plane_perpendicular_z=False,
         BigFloat_precision = None
-    ) where {R <: Real}    
+    ): #where {R <: Real}    
     
     # create a grid of θ_ϕ
     θ_array, ϕ_array = meshgrid_θ_ϕ(n_θ_points, n_ϕ_points; min_θ=1e-16, min_ϕ=1e-16, rotationally_symmetric=rotationally_symmetric)    
