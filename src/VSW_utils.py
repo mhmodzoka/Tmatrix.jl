@@ -124,7 +124,7 @@ def d_hankel_1_x_over_x(n: int, x): #where {NN <: Number, I <: Integer}
     """
     Derivative of (spherical Hankel of first kind * x) divided by x
     """
-    return d_bessel_1_x_over_x(n, x) + im * d_bessel_2_x_over_x(n, x)
+    return d_bessel_1_x_over_x(n, x) + 1j * d_bessel_2_x_over_x(n, x)
 
 def d_bessel_2_x_over_x(n: int, x):  #where {NN <: Number, I <: Integer}
     """
