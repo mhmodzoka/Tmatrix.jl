@@ -10,9 +10,9 @@ import VSW_utils as vswu
 def Q_matrix(
         n_max: int,
         k1: np.complex128, k2: np.complex128,
-        k1r_array: np.ndarray(dtype=np.complex128), k2r_array: np.ndarray(dtype=np.complex128), # C
-        r_array: np.ndarray(dtype=np.float64), θ_array: np.ndarray(dtype=np.float64), 
-        ϕ_array: np.ndarray(dtype=np.float64), n̂_array, #TODO normally "n_array::Any;"" in julia, that signals it's required right?
+        k1r_array: np.ndarray.dtype, k2r_array: np.ndarray, # C
+        r_array: np.ndarray, θ_array: np.ndarray, 
+        ϕ_array: np.ndarray, n̂_array, #TODO normally "n_array::Any;"" in julia, that signals it's required right?
         kind="regular", rotationally_symmetric=False, symmetric_about_plane_perpicular_z=False,
         verbose=False,
     ): #where {R <: Real, C <: Complex{R}}
@@ -78,9 +78,9 @@ def Q_matrix(
 def Q_mn_m_n_(
         m: int, n: int, m_: int, n_: int,
         k1: np.complex128, k2: np.complex128,
-        k1r_array: np.ndarray(dtype=np.complex128), k2r_array: np.ndarray(dtype=np.complex128), # C
-        r_array: np.ndarray(dtype=np.float64), θ_array: np.ndarray(dtype=np.float64), 
-        ϕ_array: np.ndarray(dtype=np.float64), n̂_array, #TODO normally "n_array::Any;"" in julia, that signals it's required right?
+        k1r_array: np.ndarray, k2r_array: np.ndarray, # C
+        r_array: np.ndarray, θ_array: np.ndarray, 
+        ϕ_array: np.ndarray, n̂_array, #TODO normally "n_array::Any;"" in julia, that signals it's required right?
         kind="regular", Q_superscript=11, rotationally_symmetric=False,
     ): #where {R <: Real, C <: Complex{R}}
 
@@ -99,9 +99,9 @@ def Q_mn_m_n_(
 def J_mn_m_n_(
         m: int, n: int, m_: int, n_: int,
         k1: np.complex128, k2: np.complex128,
-        k1r_array: np.ndarray(dtype=np.complex128), k2r_array: np.ndarray(dtype=np.complex128), # C
-        r_array: np.ndarray(dtype=np.float64), θ_array: np.ndarray(dtype=np.float64), 
-        ϕ_array: np.ndarray(dtype=np.float64), n̂_array, #TODO normally "n_array::Any;"" in julia, that signals it's required right?
+        k1r_array: np.ndarray, k2r_array: np.ndarray, # C
+        r_array: np.ndarray, θ_array: np.ndarray, 
+        ϕ_array: np.ndarray, n̂_array, #TODO normally "n_array::Any;"" in julia, that signals it's required right?
         kind="regular", J_superscript=11, rotationally_symmetric=False,
     ): #where {R <: Real, C <: Complex{R}}
     
@@ -137,9 +137,9 @@ def J_mn_m_n_(
 
 def J_mn_m_n__integrand(
     m: int, n: int, m_: int, n_: int,
-    k1r_array: np.ndarray(dtype=np.complex128), k2r_array: np.ndarray(dtype=np.complex128), # C
-    r_array: np.ndarray(dtype=np.float64), θ_array: np.ndarray(dtype=np.float64), 
-    ϕ_array: np.ndarray(dtype=np.float64), n̂_array,# TODO: I don't know why I get an error when I use n̂_array: AbstractVecOrMat{Vector{Float64}}
+    k1r_array: np.ndarray, k2r_array: np.ndarray, # C
+    r_array: np.ndarray, θ_array: np.ndarray, 
+    ϕ_array: np.ndarray, n̂_array,# TODO: I don't know why I get an error when I use n̂_array: AbstractVecOrMat{Vector{Float64}}
     kind="regular", J_superscript=11
 ): #where {R <: Real, C <: Complex{R}}
 
@@ -188,9 +188,9 @@ def J_mn_m_n__integrand(
 def T_matrix(
     n_max: int,
     k1: np.complex128, k2: np.complex128,
-    k1r_array: np.ndarray(dtype=np.complex128), k2r_array: np.ndarray(dtype=np.complex128), # C
-    r_array: np.ndarray(dtype=np.float64), θ_array: np.ndarray(dtype=np.float64), 
-    ϕ_array: np.ndarray(dtype=np.float64), n̂_array, #TODO normally "n_array::Any;"" in julia, that signals it's required right?
+    k1r_array: np.ndarray, k2r_array: np.ndarray, # C
+    r_array: np.ndarray, θ_array: np.ndarray, 
+    ϕ_array: np.ndarray, n̂_array, #TODO normally "n_array::Any;"" in julia, that signals it's required right?
     rotationally_symmetric=False, symmetric_about_plane_perpendicular_z=False, HDF5_filename=None,
     verbose=False, create_new_arrays=False, BigFloat_precision = None
 ):
