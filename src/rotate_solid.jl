@@ -1,8 +1,7 @@
 using GLMakie
-using PrettyPrint
 #input format: scattering cross section magnitude (R), emiss cross section ((x,y) point_list)
 function main()
-    granularity = 3
+    granularity = 20
 
     function convert_to_spherical(point_list)
         spherical_list = []
@@ -39,8 +38,9 @@ function main()
     end
 
     function make_mesh(granularity::Int, point_list)
+        num_points = size(point_list,1)
         new_point_list = []
-        for row in 1:size(point_list,1)
+        for row in 1:num_points
             for arc in 0:granularity-1
                 theta = arc*pi/granularity
                 point_x = cos(theta)*point_list[row,1]
@@ -55,24 +55,26 @@ function main()
         end
 
         face_list = []
-        for u in 0:(granularity-1), v in 0:(granularity-1)
-            p1 = granularity*v+u+1
-            p2 = mod(granularity*v + mod(u + 1, granularity), granularity*granularity)+1
-            p3 = mod(granularity*(v + 1) + u, granularity*granularity)+1
-            p4 = mod(granularity*(v + 1) + mod(u + 1, granularity), granularity*granularity)+1
-            if face_list == []
-                face_list =
-                    [
-                        p1 p2 p3 p4
-                    ]
-                
-            else
-                face_list = vcat(
-                    face_list,
-                    [
-                        p1 p2 p3 p4
-                    ]
-                )
+        for v in 0:(num_points-1)
+            for u in 0:(granularity-1)
+                p1 = num_points*v+u+1
+                p2 = mod(num_points*v + mod(u + 1, granularity), num_points*granularity)+1
+                p3 = mod(num_points*(v + 1) + u, num_points*granularity)+1
+                p4 = mod(num_points*(v + 1) + mod(u + 1, granularity), num_points*granularity)+1
+                if face_list == []
+                    face_list =
+                        [
+                            p1 p2 p3 p4
+                        ]
+                    
+                else
+                    face_list = vcat(
+                        face_list,
+                        [
+                            p1 p2 p3 p4
+                        ]
+                    )
+                end
             end
         end
 
@@ -114,16 +116,14 @@ function main()
 
 
 
-    for i in 1:10
+    for i in 1:1
 
-        point_list = [0 0 0; 0 5 0]
+        point_list = [1 1 1; 1 8 1]
         for i in 1:2
-            point_list = vcat(point_list,([rand((0:5)) rand((0:5)) rand((0:5))]))
+            point_list = vcat(point_list,([rand((2:8)) rand((0:8)) rand((2:8))]))
         end
 
         mesh_point_list, mesh_face_list = make_mesh(granularity, point_list)
-        pprintln(mesh_face_list)
-        pprintln(mesh_point_list)
         scene = mesh(mesh_point_list, mesh_face_list, shading = false)
         
     end
