@@ -122,9 +122,12 @@ function main()
         for i in 1:2
             point_list = vcat(point_list,([rand((2:8)) rand((0:8)) rand((2:8))]))
         end
-
+        
         mesh_point_list, mesh_face_list = make_mesh(granularity, point_list)
         scene = mesh(mesh_point_list, mesh_face_list, shading = false)
+            
+        println(mesh_face_list)
+        println(mesh_point_list)
         
     end
 end
