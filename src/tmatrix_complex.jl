@@ -183,17 +183,17 @@ function J_mn_m_n__integrand_SVector(
 
     # determining the type of the first the second VSWF
     if J_superscript == 11 # TODO: this if-statement can be done more nicely. We separate J_superscript into two pieces, the number 1 represents M_mn_wave_SVector, while number 2 represents N_mn_wave_SVector
-        first_function = M_mn_wave_SVector
-        second_function = M_mn_wave_SVector
+        first_function = VectorSphericalWaves.M_mn_wave_SVector
+        second_function = VectorSphericalWaves.M_mn_wave_SVector
     elseif J_superscript == 12
-        first_function = M_mn_wave_SVector
-        second_function = N_mn_wave_SVector
+        first_function = VectorSphericalWaves.M_mn_wave_SVector
+        second_function = VectorSphericalWaves.N_mn_wave_SVector
     elseif J_superscript == 21
-        first_function = N_mn_wave_SVector
-        second_function = M_mn_wave_SVector
+        first_function = VectorSphericalWaves.N_mn_wave_SVector
+        second_function = VectorSphericalWaves.M_mn_wave_SVector
     elseif J_superscript == 22
-        first_function = N_mn_wave_SVector
-        second_function = N_mn_wave_SVector
+        first_function = VectorSphericalWaves.N_mn_wave_SVector
+        second_function = VectorSphericalWaves.N_mn_wave_SVector
     else
         throw(DomainError("J_superscript must be any of [11,12,21,22]"))
     end

@@ -101,7 +101,12 @@ function find_point_splitting_line_between_two_points_and_normal_vector_to_this_
     θ2::R,
 ) where {R <: Real}
     S = calculate_distance_between_two_points(r1, θ1, r2, θ2)
-    angle_between_r1_and_S = asin(r2 * sin(θ2 - θ1) / S)
+        t=r2 * sin(θ2 - θ1) / S
+        if t ≈ 1
+        angle_between_r1_and_S=asin(1)
+        else
+        angle_between_r1_and_S = asin(t)
+    end
     # to fix the inverse sin of obtuse angle
     if r2 > r1
         angle_between_r1_and_S = pi - angle_between_r1_and_S
@@ -330,6 +335,7 @@ julia> 5-element Vector{Int64}:
 3
 """
 function add_elements_from_two_arrays_in_turn(array_1, array_2)
+    return array_1
     return [
         isodd(i) ? array_1[Int((i + 1) / 2)] : array_2[Int(i / 2)] for
         i in 1:(length(array_1) + length(array_2))
