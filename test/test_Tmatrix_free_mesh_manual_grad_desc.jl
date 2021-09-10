@@ -82,7 +82,7 @@ rotationally_symmetric = true
 symmetric_about_plane_perpendicular_z = false
 BigFloat_precision = nothing
 
-learning_rate = 0.5e-18
+learning_rate = 0.5e-4
 global loss_here = -1e6
 global ∂loss = 0
 println("Starting optimization for T-matrix ...")
