@@ -126,13 +126,13 @@ function get_SpeedOfLight(; Eps = nothing, Mu = nothing, Eps_r = nothing, Mu_r =
     if (Mu == nothing) && (Mu_r !== nothing)
         Mu = Mu_r * Mu_vacuum
     else
-        throw(DomainError("You must input either `Mu` or `Mu_r` kewword arguments."))
+        throw(DomainError("You must input either `Mu` or `Mu_r` keyword arguments."))
     end
 
     if (Eps == nothing) && (Eps_r !== nothing)
         Eps = Eps_r * Eps_vacuum
     else
-        throw(DomainError("You must input either `Eps` or `Eps_r` kewword arguments."))
+        throw(DomainError("You must input either `Eps` or `Eps_r` keyword arguments."))
     end
 
     return 1 / sqrt(Mu * Eps)
