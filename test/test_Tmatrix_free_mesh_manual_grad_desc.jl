@@ -116,7 +116,7 @@ for n_iteration in 1:50
         ylabel = "scattering cross section (m)",
     )
     fig = plot(p1, p2, layout = (1, 2), size = (1200, 800))
-    mkdir("cache/iteration_particle_plots/maximizing_emissivity")
+    mkpath("cache/iteration_particle_plots/maximizing_emissivity")
     savefig(
         fig,
         "cache/iteration_particle_plots/maximizing_emissivity/particle_geom_iteration_$(n_iteration).png",
