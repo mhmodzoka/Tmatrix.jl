@@ -86,11 +86,9 @@ learning_rate = 0.5e-18
 global loss_here = -1e6
 global ∂loss = 0
 println("Starting optimization for T-matrix ...")
-global n_iteration = 0
 loss_array = []
 loss_old = 9999999999999
-while (n_iteration < 50) # (loss_here < 0)
-    global n_iteration += 1
+for n_iteration in 1:50
     global r_array = r_array .- learning_rate .* ∂loss
 
     global loss_here = objective_function(r_array, θ_array)
@@ -120,7 +118,7 @@ while (n_iteration < 50) # (loss_here < 0)
     fig = plot(p1, p2, layout = (1, 2), size = (1200, 800))
     savefig(
         fig,
-        "cache/iteration_particle_plots/maximizing_emissivity/particle_geom_iteration_$n.png",
+        "cache/iteration_particle_plots/maximizing_emissivity/particle_geom_iteration_$(n_iteration).png",
     )
     # if (loss_here - loss_old) < 1e-6; break; end
     global loss_old = loss_here
