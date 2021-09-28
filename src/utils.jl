@@ -48,6 +48,39 @@ function save_as_obj(point_list, face_list, mesh_index)
         end
     end
 end
+"""
+Converts obj to matrix for tmatrix (after convert_to_spherical)
+"""
+function obj_to_mesh_mat(filepath)
+        open(filepath) do f
+        
+            # line_number
+            
+            flag = false
+            mesh_mat = nothing
+            # read till end of file
+            while flag == false
+        
+                # read a new / next line for every iteration          
+                s = readline(f) 
+                if s[1] == 'v'
+                    x = convert(Float64,s[3])
+                    y = convert(Float64,s[5])
+                    z = convert(Float64,s[7])
+                    if mesh_mat == nothing
+                        mesh_mat = [x y z]
+                    else
+                        mesh_mat = vcat(mesh_mat, [x y z])
+                    end
+                else
+                    flag = true
+                end
+                
+                
+            end
+            print(mesh_mat)
+        end
+    end
 
 """
     Calculate dot product for two vectors.
