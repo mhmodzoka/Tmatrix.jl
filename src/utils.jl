@@ -2,6 +2,53 @@
 
 using LinearAlgebra
 
+
+"""
+Converts to spherical
+"""
+function convert_to_spherical(point_list)
+    spherical_list = []
+    for row in 1:size(point_list,1)
+        point_x = point_list[row, 1]
+        point_y = point_list[row, 2]
+        point_z = point_list[row, 3]
+        r = point_x^2 + point_y^2 + point_z^2
+
+        if point_y == 0
+            θ = 0
+        else
+            θ = atan(point_x/point_y)
+        end
+
+        if point_y == 0        
+            ϕ = 0
+        else   
+            ϕ = acos(point_z/r)
+        end
+
+        if row == 1
+            spherical_list = [r θ ϕ]
+        else
+            spherical_list = vcat(spherical_list, [r θ ϕ])
+        end
+    end
+    return(spherical_list)
+end
+
+"""
+Saves as obj
+"""
+function save_as_obj(point_list, face_list, mesh_index)
+    open("data/mesh_$(mesh_index).obj", "w") do mesh_target
+        for row in 1:size(point_list,1)
+            write(mesh_target, "v $(point_list[row, 1]) $(point_list[row, 2]) $(point_list[row, 3]) \n")
+        end
+        for row in 1:size(face_list,1)
+            write(mesh_target, "f $(face_list[row, 1]) $(face_list[row, 2]) $(face_list[row, 3]) \n")
+        end
+    end
+end
+
 """
     Calculate dot product for two vectors.
 
