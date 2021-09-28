@@ -95,7 +95,7 @@ function obj_to_mesh_mat(filepath)
                 
                 
             end
-            print(mesh_mat)
+            return(mesh_mat)
         end
     end
 
