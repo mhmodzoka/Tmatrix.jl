@@ -22,7 +22,9 @@ end
 Converts to spherical
 """
 function convert_to_spherical(point_list)
-    spherical_list = []
+    θ_list = []
+    ϕ_list = []
+    r_list = []
     for row in 1:size(point_list,1)
         point_x = point_list[row, 1]
         point_y = point_list[row, 2]
@@ -41,13 +43,13 @@ function convert_to_spherical(point_list)
             ϕ = acos(point_z/r)
         end
 
-        if row == 1
-            spherical_list = [r θ ϕ]
-        else
-            spherical_list = vcat(spherical_list, [r θ ϕ])
-        end
+        push!(θ_list, θ)
+        
+        push!(ϕ_list, ϕ)
+        
+        push!(r_list, r)
     end
-    return(spherical_list)
+    return(r_list, θ_list, ϕ_list)
 end
 
 """
