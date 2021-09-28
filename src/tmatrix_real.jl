@@ -975,6 +975,46 @@ function T_matrix_SeparateRealImag_arbitrary_mesh(
     )
 end
 
+
+
+"""
+Accepts .obj
+"""
+function T_matrix_SeparateRealImag_arbitrary_mesh_cartesian(
+    n_max::Int, k1_r::R, k1_i::R, k2_r::R, k2_i::R,
+    filepath::string,
+    rotationally_symmetric::Bool, symmetric_about_plane_perpendicular_z::Bool, BigFloat_precision
+) where {R <: Real}
+    point_mat = obj_to_mesh_mat(filepath)
+    return T_matrix_SeparateRealImag_arbitrary_mesh_cartesian(
+        n_max, k1_r, k1_i, k2_r, k2_i,point_mat,rotationally_symmetric, symmetric_about_plane_perpendicular_z, BigFloat_precision)
+end
+"""
+Accepts vector of [x, y, z] instead
+"""
+function T_matrix_SeparateRealImag_arbitrary_mesh_cartesian(
+    n_max::Int, k1_r::R, k1_i::R, k2_r::R, k2_i::R,
+    vecvec::Vector{Vector{Float64}},
+    rotationally_symmetric::Bool, symmetric_about_plane_perpendicular_z::Bool, BigFloat_precision
+) where {R <: Real}
+    point_mat = vecvec_to_matrix(vecvec)
+    return T_matrix_SeparateRealImag_arbitrary_mesh_cartesian(
+        n_max, k1_r, k1_i, k2_r, k2_i,point_mat,rotationally_symmetric, symmetric_about_plane_perpendicular_z, BigFloat_precision)
+end
+
+"""
+Accepts matrix with rows xyz instead
+"""
+function T_matrix_SeparateRealImag_arbitrary_mesh_cartesian(
+    n_max::Int, k1_r::R, k1_i::R, k2_r::R, k2_i::R,
+    point_matrix::AbstractVecOrMat{R},
+    rotationally_symmetric::Bool, symmetric_about_plane_perpendicular_z::Bool, BigFloat_precision
+) where {R <: Real}
+    r_array, θ_array, ϕ_array = convert_to_spherical(point_matrix)
+    T_matrix_SeparateRealImag_arbitrary_mesh(n_max, k1_r, k1_i, k2_r, k2_i, r_array, θ_array, ϕ_array, rotationally_symmetric, symmetric_about_plane_perpendicular_z, BigFloat_precision)
+end
+
+
 """
     allowing wavelength/frequency and material properties, rather than wavevectors
 """
