@@ -19,48 +19,61 @@ using HDF5
 
 """
     Calculate M_mn_wave as an array
-This is the same as VectorSphericalHarmonics.M_mn_wave, but accept kr_array, θ_array, ϕ_array
+
+# This is the same as VectorSphericalHarmonics.M_mn_wave, but accept kr_array, θ_array, ϕ_array
+
 Parameters
-==========
+
 kr_array, θ_array, ϕ_array : arrays of arbitrary shape
 
-return
-======
+# return
+
 M_mn_wave_array_ : M_mn_wave with shape same as any of kr_array, θ_array, ϕ_array, with an added dimension to represent the three components
 """
 function M_mn_wave_array(
-        m::Int, n::Int, kr_array::AbstractVecOrMat{<:Complex{<:Real}}, θ_array::AbstractVecOrMat{R},
-        ϕ_array::AbstractVecOrMat{R}; kind="regular"
-    ) where {R <: Real}
+    m::Int,
+    n::Int,
+    kr_array::AbstractVecOrMat{<:Complex{<:Real}},
+    θ_array::AbstractVecOrMat{R},
+    ϕ_array::AbstractVecOrMat{R};
+    kind = "regular",
+) where {R <: Real}
     # Alok way is faster indeed!
     # TODO: @Alok, I think if we use boradcast it would be faster. I think avoiding preallocation makes the code cleaner and faster
-    M_mn_wave_array_ = (_ -> zero(SVector{3,Complex})).(kr_array)
+    M_mn_wave_array_ = (_ -> zero(SVector{3, Complex})).(kr_array)
     for idx in eachindex(kr_array)
-        M_mn_wave_array_[idx] = M_mn_wave(m, n, kr_array[idx], θ_array[idx], ϕ_array[idx], kind=kind)
+        M_mn_wave_array_[idx] =
+            M_mn_wave(m, n, kr_array[idx], θ_array[idx], ϕ_array[idx], kind = kind)
     end
     return M_mn_wave_array_
 end
 
-
 """
     Calculate N_mn_wave as an array
-This is the same as VectorSphericalHarmonics.N_mn_wave, but accept kr_array, θ_array, ϕ_array
+
+# This is the same as VectorSphericalHarmonics.N_mn_wave, but accept kr_array, θ_array, ϕ_array
+
 Parameters
-==========
+
 kr_array, θ_array, ϕ_array : arrays of arbitrary shape
 
-return
-======
+# return
+
 N_mn_wave_array_ : N_mn_wave with shape same as any of kr_array, θ_array, ϕ_array, with an added dimension to represent the three components
 """
 function N_mn_wave_array(
-        m::Int, n::Int, kr_array::AbstractVecOrMat{<:Complex{<:Real}}, θ_array::AbstractVecOrMat{R},
-        ϕ_array::AbstractVecOrMat{R}; kind="regular"
-    ) where {R <: Real}
+    m::Int,
+    n::Int,
+    kr_array::AbstractVecOrMat{<:Complex{<:Real}},
+    θ_array::AbstractVecOrMat{R},
+    ϕ_array::AbstractVecOrMat{R};
+    kind = "regular",
+) where {R <: Real}
     # Alok way
-    N_mn_wave_array_ = (_ -> zero(SVector{3,Complex})).(kr_array)
+    N_mn_wave_array_ = (_ -> zero(SVector{3, Complex})).(kr_array)
     for idx in eachindex(kr_array)
-        N_mn_wave_array_[idx] = N_mn_wave(m, n, kr_array[idx], θ_array[idx], ϕ_array[idx], kind=kind)
+        N_mn_wave_array_[idx] =
+            N_mn_wave(m, n, kr_array[idx], θ_array[idx], ϕ_array[idx], kind = kind)
     end
     return N_mn_wave_array_
 end
@@ -69,10 +82,11 @@ end
 # calculate J and Rg J, from equations 5.184 and 5.190
 """
     Calculate the integrand of J (including dS=r²sin(θ)dθdϕ) from equations 5.184 and 5.190.
+
 It calculate all the integrand, and multiply it by r²sin(θ)
 
-Inputs
-======
+# Inputs
+
 m, n, m_, n_ : int, order and rank of VSWF inside and outside the particle
 k1r_array, k2r_array : complex 2D array, product of wavevector and r, evaluated at points on the surface of the particle
 θ_array, ϕ_array : complex 2D array, spherical coordinates of points on the particle surface
@@ -80,18 +94,25 @@ n̂_array : 3D array, unit vector normal to the surface of the particle
 kind : string, either ["regular" or "incoming"] or ["irregular" or "outgoing"]
 J_superscript : superscript at the top of J, it can be any of [11,12,21,22]
 
-Outputs
-=======
+# Outputs
+
 J
 """
 function J_mn_m_n__integrand(
-        m::Int, n::Int, m_::Int, n_::Int,
-        k1r_array::AbstractVecOrMat{C}, k2r_array::AbstractVecOrMat{C},
-        r_array::AbstractVecOrMat{R}, θ_array::AbstractVecOrMat{R}, ϕ_array::AbstractVecOrMat{R}, n̂_array::Any; # TODO: I don't know why I get an error when I use n̂_array::AbstractVecOrMat{Vector{Float64}}
-        kind="regular", J_superscript=11
-    ) where {R <: Real, C <: Complex{R}}
+    m::Int,
+    n::Int,
+    m_::Int,
+    n_::Int,
+    k1r_array::AbstractVecOrMat{C},
+    k2r_array::AbstractVecOrMat{C},
+    r_array::AbstractVecOrMat{R},
+    θ_array::AbstractVecOrMat{R},
+    ϕ_array::AbstractVecOrMat{R},
+    n̂_array::Any; # TODO: I don't know why I get an error when I use n̂_array::AbstractVecOrMat{Vector{Float64}}
+    kind = "regular",
+    J_superscript = 11,
+) where {R <: Real, C <: Complex{R}}
 
-    
     # determining the type of the first the second VSWF
     if J_superscript == 11 # TODO: this if-statement can be done more nicely. We separate J_superscript into two pieces, the number 1 represents M_mn_wave_array, while number 2 represents N_mn_wave_array
         first_function = M_mn_wave_array
@@ -120,13 +141,21 @@ function J_mn_m_n__integrand(
     end
 
     # the cross product
-    cross_product_MN = cross.(
-        first_function(m_, n_, k2r_array, θ_array, ϕ_array, kind=kind_first_function), # I can directly call M,N waves, with dots.
-        second_function(-m, n, k1r_array, θ_array, ϕ_array, kind=kind_second_function)
-    )
+    cross_product_MN =
+        cross.(
+            first_function(m_, n_, k2r_array, θ_array, ϕ_array, kind = kind_first_function), # I can directly call M,N waves, with dots.
+            second_function(
+                -m,
+                n,
+                k1r_array,
+                θ_array,
+                ϕ_array,
+                kind = kind_second_function,
+            ),
+        )
 
     # dot multiplying the cross product by the unit vector, and multiplying by (-1)^m
-    cross_product_MN_dot_n̂ = (-1).^m .* vector_dot_product.(cross_product_MN, n̂_array)
+    cross_product_MN_dot_n̂ = (-1) .^ m .* vector_dot_product.(cross_product_MN, n̂_array)
 
     # multiplying by dS=r²sin(θ)
     J_integrand = surface_integrand(cross_product_MN_dot_n̂, r_array, θ_array)
@@ -134,70 +163,104 @@ function J_mn_m_n__integrand(
     return J_integrand
 end
 
-
 """
     Same as J_mn_m_n__integrand, but uses M_mn_wave_SVector and N_mn_wave_SVector
 """
 function J_mn_m_n__integrand_SVector(
-    m::Int, n::Int, m_::Int, n_::Int,
-    k1r_array::AbstractVecOrMat{C}, k2r_array::AbstractVecOrMat{C},
-    r_array::AbstractVecOrMat{R}, θ_array::AbstractVecOrMat{R}, ϕ_array::AbstractVecOrMat{R}, n̂_array::Any; # TODO: I don't know why I get an error when I use n̂_array::AbstractVecOrMat{Vector{Float64}}
-    kind="regular", J_superscript=11
+    m::Int,
+    n::Int,
+    m_::Int,
+    n_::Int,
+    k1r_array::AbstractVecOrMat{C},
+    k2r_array::AbstractVecOrMat{C},
+    r_array::AbstractVecOrMat{R},
+    θ_array::AbstractVecOrMat{R},
+    ϕ_array::AbstractVecOrMat{R},
+    n̂_array::Any; # TODO: I don't know why I get an error when I use n̂_array::AbstractVecOrMat{Vector{Float64}}
+    kind = "regular",
+    J_superscript = 11,
 ) where {R <: Real, C <: Complex{R}}
 
+    # determining the type of the first the second VSWF
+    if J_superscript == 11 # TODO: this if-statement can be done more nicely. We separate J_superscript into two pieces, the number 1 represents M_mn_wave_SVector, while number 2 represents N_mn_wave_SVector
+        first_function = VectorSphericalWaves.M_mn_wave_SVector
+        second_function = VectorSphericalWaves.M_mn_wave_SVector
+    elseif J_superscript == 12
+        first_function = VectorSphericalWaves.M_mn_wave_SVector
+        second_function = VectorSphericalWaves.N_mn_wave_SVector
+    elseif J_superscript == 21
+        first_function = VectorSphericalWaves.N_mn_wave_SVector
+        second_function = VectorSphericalWaves.M_mn_wave_SVector
+    elseif J_superscript == 22
+        first_function = VectorSphericalWaves.N_mn_wave_SVector
+        second_function = VectorSphericalWaves.N_mn_wave_SVector
+    else
+        throw(DomainError("J_superscript must be any of [11,12,21,22]"))
+    end
 
-# determining the type of the first the second VSWF
-if J_superscript == 11 # TODO: this if-statement can be done more nicely. We separate J_superscript into two pieces, the number 1 represents M_mn_wave_SVector, while number 2 represents N_mn_wave_SVector
-    first_function = M_mn_wave_SVector
-    second_function = M_mn_wave_SVector
-elseif J_superscript == 12
-    first_function = M_mn_wave_SVector
-    second_function = N_mn_wave_SVector
-elseif J_superscript == 21
-    first_function = N_mn_wave_SVector
-    second_function = M_mn_wave_SVector
-elseif J_superscript == 22
-    first_function = N_mn_wave_SVector
-    second_function = N_mn_wave_SVector
-else
-    throw(DomainError("J_superscript must be any of [11,12,21,22]"))
-end
+    # determining the type of the first and second VSWF
+    kind_first_function = "regular"
+    if kind == "irregular"
+        kind_second_function = "irregular"
+    elseif kind == "regular"
+        kind_second_function = "regular"
+    else
+        throw(DomainError("""kind must be any of ["regular", "irregular"]"""))
+    end
 
-# determining the type of the first and second VSWF
-kind_first_function = "regular"
-if kind == "irregular"
-    kind_second_function = "irregular"
-elseif kind == "regular"
-    kind_second_function = "regular"
-else
-    throw(DomainError("""kind must be any of ["regular", "irregular"]"""))
-end
+    # the cross product
+    cross_product_MN =
+        cross.(
+            first_function.(
+                m_,
+                n_,
+                k2r_array,
+                θ_array,
+                ϕ_array,
+                kind = kind_first_function,
+            ), # I can directly call M,N waves, with dots.
+            second_function.(
+                -m,
+                n,
+                k1r_array,
+                θ_array,
+                ϕ_array,
+                kind = kind_second_function,
+            ),
+        )
 
-# the cross product
-cross_product_MN = cross.(
-    first_function.(m_, n_, k2r_array, θ_array, ϕ_array, kind=kind_first_function), # I can directly call M,N waves, with dots.
-    second_function.(-m, n, k1r_array, θ_array, ϕ_array, kind=kind_second_function)
-)
+    # dot multiplying the cross product by the unit vector, and multiplying by (-1)^m
+    cross_product_MN_dot_n̂ = (-1) .^ m .* vector_dot_product.(cross_product_MN, n̂_array)
 
-# dot multiplying the cross product by the unit vector, and multiplying by (-1)^m
-cross_product_MN_dot_n̂ = (-1).^m .* vector_dot_product.(cross_product_MN, n̂_array)
+    # multiplying by dS=r²sin(θ)
+    J_integrand = surface_integrand(cross_product_MN_dot_n̂, r_array, θ_array)
 
-# multiplying by dS=r²sin(θ)
-J_integrand = surface_integrand(cross_product_MN_dot_n̂, r_array, θ_array)
-
-return J_integrand
+    return J_integrand
 end
 
 function J_mn_m_n_(
-        m::Int, n::Int, m_::Int, n_::Int,
-        k1r_array::AbstractVecOrMat{C}, k2r_array::AbstractVecOrMat{C},
-        r_array::AbstractVecOrMat{R}, θ_array::AbstractVecOrMat{R}, ϕ_array::AbstractVecOrMat{R}, n̂_array::Any; # TODO: I don't know why I get an error when I use n̂_array::AbstractVecOrMat{Vector{Float64}}
-        kind="regular", J_superscript=11, rotationally_symmetric=false,
-    ) where {R <: Real, C <: Complex{R}}
+    m::Int,
+    n::Int,
+    m_::Int,
+    n_::Int,
+    k1r_array::AbstractVecOrMat{C},
+    k2r_array::AbstractVecOrMat{C},
+    r_array::AbstractVecOrMat{R},
+    θ_array::AbstractVecOrMat{R},
+    ϕ_array::AbstractVecOrMat{R},
+    n̂_array::Any; # TODO: I don't know why I get an error when I use n̂_array::AbstractVecOrMat{Vector{Float64}}
+    kind = "regular",
+    J_superscript = 11,
+    rotationally_symmetric = false,
+) where {R <: Real, C <: Complex{R}}
     if rotationally_symmetric
         # make sure that θ_array is 1D
         if length(size(θ_array)) != 1
-            throw(DomainError("Since you have indicated << rotationally_symmetric = true >>, θ_array has to be 1D. Now it is $(length(size(θ_array)))D"))
+            throw(
+                DomainError(
+                    "Since you have indicated << rotationally_symmetric = true >>, θ_array has to be 1D. Now it is $(length(size(θ_array)))D",
+                ),
+            )
         end
         ϕ_array = convert(typeof(θ_array), zeros(size(θ_array)))
     end
@@ -209,10 +272,18 @@ function J_mn_m_n_(
 
     else
         J_integrand_dS = J_mn_m_n__integrand_SVector(
-            m, n,m_,n_,
-            k1r_array,k2r_array,
-            r_array,θ_array,ϕ_array,n̂_array;
-            kind=kind,J_superscript=J_superscript
+            m,
+            n,
+            m_,
+            n_,
+            k1r_array,
+            k2r_array,
+            r_array,
+            θ_array,
+            ϕ_array,
+            n̂_array;
+            kind = kind,
+            J_superscript = J_superscript,
         )
     end
 
@@ -224,129 +295,514 @@ function J_mn_m_n_(
         # integrate over θ and ϕ
         # TODO: replace this integral with surface mesh quadrature, like this one: https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5095443/ , https://github.com/jareeger/Smooth_Closed_Surface_Quadrature_RBF-julia
         # assuming that θ_array, ϕ_array were created with meshgrid function
-        J = trapz((θ_array[:,1], ϕ_array[1,:]), J_integrand_dS)
-end
+        J = trapz((θ_array[:, 1], ϕ_array[1, :]), J_integrand_dS)
+    end
 
     return J
 end
 
 function Q_mn_m_n_(
-        m::Int, n::Int, m_::Int, n_::Int,
-        k1::C, k2::C,
-        k1r_array::AbstractVecOrMat{C}, k2r_array::AbstractVecOrMat{C},
-        r_array::AbstractVecOrMat{R}, θ_array::AbstractVecOrMat{R}, ϕ_array::AbstractVecOrMat{R}, n̂_array::Any; # TODO: I don't know why I get an error when I use n̂_array::AbstractVecOrMat{Vector{Float64}}
-        kind="regular", Q_superscript=11, rotationally_symmetric=false,
-    ) where {R <: Real, C <: Complex{R}}
-    if Q_superscript == 11; J_superscript_1 = 21 ; J_superscript_2 = 12
-    elseif Q_superscript == 12; J_superscript_1 = 11 ; J_superscript_2 = 22
-    elseif Q_superscript == 21; J_superscript_1 = 22 ; J_superscript_2 = 11
-    elseif Q_superscript == 22; J_superscript_1 = 12 ; J_superscript_2 = 21
+    m::Int,
+    n::Int,
+    m_::Int,
+    n_::Int,
+    k1::C,
+    k2::C,
+    k1r_array::AbstractVecOrMat{C},
+    k2r_array::AbstractVecOrMat{C},
+    r_array::AbstractVecOrMat{R},
+    θ_array::AbstractVecOrMat{R},
+    ϕ_array::AbstractVecOrMat{R},
+    n̂_array::Any; # TODO: I don't know why I get an error when I use n̂_array::AbstractVecOrMat{Vector{Float64}}
+    kind = "regular",
+    Q_superscript = 11,
+    rotationally_symmetric = false,
+) where {R <: Real, C <: Complex{R}}
+    if Q_superscript == 11
+        J_superscript_1 = 21
+        J_superscript_2 = 12
+    elseif Q_superscript == 12
+        J_superscript_1 = 11
+        J_superscript_2 = 22
+    elseif Q_superscript == 21
+        J_superscript_1 = 22
+        J_superscript_2 = 11
+    elseif Q_superscript == 22
+        J_superscript_1 = 12
+        J_superscript_2 = 21
     end
 
     Q = (
-        -im .* k1 .* k2 .* J_mn_m_n_(m, n, m_, n_, k1r_array, k2r_array, r_array, θ_array, ϕ_array, n̂_array; kind=kind, J_superscript=J_superscript_1, rotationally_symmetric=rotationally_symmetric)
-        - im .* k1.^2    .* J_mn_m_n_(m, n, m_, n_, k1r_array, k2r_array, r_array, θ_array, ϕ_array, n̂_array; kind=kind, J_superscript=J_superscript_2, rotationally_symmetric=rotationally_symmetric)
+        -im .* k1 .* k2 .* J_mn_m_n_(
+            m,
+            n,
+            m_,
+            n_,
+            k1r_array,
+            k2r_array,
+            r_array,
+            θ_array,
+            ϕ_array,
+            n̂_array;
+            kind = kind,
+            J_superscript = J_superscript_1,
+            rotationally_symmetric = rotationally_symmetric,
+        ) -
+        im .* k1 .^ 2 .* J_mn_m_n_(
+            m,
+            n,
+            m_,
+            n_,
+            k1r_array,
+            k2r_array,
+            r_array,
+            θ_array,
+            ϕ_array,
+            n̂_array;
+            kind = kind,
+            J_superscript = J_superscript_2,
+            rotationally_symmetric = rotationally_symmetric,
+        )
     )
 
     return Q
 end
 
 function Q_matrix(
-        n_max::Int,
-        k1::C, k2::C,
-        k1r_array::AbstractVecOrMat{C}, k2r_array::AbstractVecOrMat{C},
-        r_array::AbstractVecOrMat{R}, θ_array::AbstractVecOrMat{R}, ϕ_array::AbstractVecOrMat{R}, n̂_array::Any; # TODO: I don't know why I get an error when I use n̂_array::AbstractVecOrMat{Vector{Float64}}
-        kind="regular", rotationally_symmetric=false, symmetric_about_plane_perpendicular_z=false,
-        verbose=false,
-    ) where {R <: Real, C <: Complex{R}}
+    n_max::Int,
+    k1::C,
+    k2::C,
+    k1r_array::AbstractVecOrMat{C},
+    k2r_array::AbstractVecOrMat{C},
+    r_array::AbstractVecOrMat{R},
+    θ_array::AbstractVecOrMat{R},
+    ϕ_array::AbstractVecOrMat{R},
+    n̂_array::Any; # TODO: I don't know why I get an error when I use n̂_array::AbstractVecOrMat{Vector{Float64}}
+    kind = "regular",
+    rotationally_symmetric = false,
+    symmetric_about_plane_perpendicular_z = false,
+    verbose = false,
+) where {R <: Real, C <: Complex{R}}
     idx_max = get_max_single_index_from_n_max(n_max)
     Q_mn_m_n_11 = zeros(typeof(k1), idx_max, idx_max) # TODO: @Alok, should I replace arrays with SMatrix? I am afraid it may get slower, as I have seen that StaticArray may get slower for arrays larger than 100 elements
     Q_mn_m_n_12 = zeros(typeof(k1), idx_max, idx_max)
     Q_mn_m_n_21 = zeros(typeof(k1), idx_max, idx_max)
     Q_mn_m_n_22 = zeros(typeof(k1), idx_max, idx_max)
 
-    idx = 0;
-    for n = 1:n_max
-        for m = -n:n
+    idx = 0
+    for n in 1:n_max
+        for m in (-n):n
             idx += 1
-            idx_ = 0;
-            for n_ = 1:n_max
-                for m_ = -n_:n_
+            idx_ = 0
+            for n_ in 1:n_max
+                for m_ in (-n_):n_
                     idx_ += 1
-                    if verbose; println("n,m,idx = $n,$m,$idx  n_,m_,idx_ = $n_,$m_,$idx_"); end
+                    if verbose
+                        println("n,m,idx = $n,$m,$idx  n_,m_,idx_ = $n_,$m_,$idx_")
+                    end
 
                     if rotationally_symmetric
                         if m == m_
                             if symmetric_about_plane_perpendicular_z
                                 # apply equations 5.208 and 5.209
                                 if iseven(n + n_)
-                                    Q_mn_m_n_11[idx, idx_] = Q_mn_m_n_(m, n, m_, n_, k1, k2, k1r_array, k2r_array, r_array, θ_array, ϕ_array, n̂_array;kind=kind,Q_superscript=11, rotationally_symmetric=rotationally_symmetric)
-                                    Q_mn_m_n_22[idx, idx_] = Q_mn_m_n_(m, n, m_, n_, k1, k2, k1r_array, k2r_array, r_array, θ_array, ϕ_array, n̂_array;kind=kind,Q_superscript=22, rotationally_symmetric=rotationally_symmetric)
+                                    Q_mn_m_n_11[idx, idx_] = Q_mn_m_n_(
+                                        m,
+                                        n,
+                                        m_,
+                                        n_,
+                                        k1,
+                                        k2,
+                                        k1r_array,
+                                        k2r_array,
+                                        r_array,
+                                        θ_array,
+                                        ϕ_array,
+                                        n̂_array;
+                                        kind = kind,
+                                        Q_superscript = 11,
+                                        rotationally_symmetric = rotationally_symmetric,
+                                    )
+                                    Q_mn_m_n_22[idx, idx_] = Q_mn_m_n_(
+                                        m,
+                                        n,
+                                        m_,
+                                        n_,
+                                        k1,
+                                        k2,
+                                        k1r_array,
+                                        k2r_array,
+                                        r_array,
+                                        θ_array,
+                                        ϕ_array,
+                                        n̂_array;
+                                        kind = kind,
+                                        Q_superscript = 22,
+                                        rotationally_symmetric = rotationally_symmetric,
+                                    )
                                 else
-                                    Q_mn_m_n_12[idx, idx_] = Q_mn_m_n_(m, n, m_, n_, k1, k2, k1r_array, k2r_array, r_array, θ_array, ϕ_array, n̂_array;kind=kind,Q_superscript=12, rotationally_symmetric=rotationally_symmetric)
-                                    Q_mn_m_n_21[idx, idx_] = Q_mn_m_n_(m, n, m_, n_, k1, k2, k1r_array, k2r_array, r_array, θ_array, ϕ_array, n̂_array;kind=kind,Q_superscript=21, rotationally_symmetric=rotationally_symmetric)
+                                    Q_mn_m_n_12[idx, idx_] = Q_mn_m_n_(
+                                        m,
+                                        n,
+                                        m_,
+                                        n_,
+                                        k1,
+                                        k2,
+                                        k1r_array,
+                                        k2r_array,
+                                        r_array,
+                                        θ_array,
+                                        ϕ_array,
+                                        n̂_array;
+                                        kind = kind,
+                                        Q_superscript = 12,
+                                        rotationally_symmetric = rotationally_symmetric,
+                                    )
+                                    Q_mn_m_n_21[idx, idx_] = Q_mn_m_n_(
+                                        m,
+                                        n,
+                                        m_,
+                                        n_,
+                                        k1,
+                                        k2,
+                                        k1r_array,
+                                        k2r_array,
+                                        r_array,
+                                        θ_array,
+                                        ϕ_array,
+                                        n̂_array;
+                                        kind = kind,
+                                        Q_superscript = 21,
+                                        rotationally_symmetric = rotationally_symmetric,
+                                    )
                                 end
                             else
-                                Q_mn_m_n_11[idx, idx_] = Q_mn_m_n_(m, n, m_, n_, k1, k2, k1r_array, k2r_array, r_array, θ_array, ϕ_array, n̂_array;kind=kind,Q_superscript=11, rotationally_symmetric=rotationally_symmetric)
-                                Q_mn_m_n_12[idx, idx_] = Q_mn_m_n_(m, n, m_, n_, k1, k2, k1r_array, k2r_array, r_array, θ_array, ϕ_array, n̂_array;kind=kind,Q_superscript=12, rotationally_symmetric=rotationally_symmetric)
-                                Q_mn_m_n_21[idx, idx_] = Q_mn_m_n_(m, n, m_, n_, k1, k2, k1r_array, k2r_array, r_array, θ_array, ϕ_array, n̂_array;kind=kind,Q_superscript=21, rotationally_symmetric=rotationally_symmetric)
-                                Q_mn_m_n_22[idx, idx_] = Q_mn_m_n_(m, n, m_, n_, k1, k2, k1r_array, k2r_array, r_array, θ_array, ϕ_array, n̂_array;kind=kind,Q_superscript=22, rotationally_symmetric=rotationally_symmetric)
+                                Q_mn_m_n_11[idx, idx_] = Q_mn_m_n_(
+                                    m,
+                                    n,
+                                    m_,
+                                    n_,
+                                    k1,
+                                    k2,
+                                    k1r_array,
+                                    k2r_array,
+                                    r_array,
+                                    θ_array,
+                                    ϕ_array,
+                                    n̂_array;
+                                    kind = kind,
+                                    Q_superscript = 11,
+                                    rotationally_symmetric = rotationally_symmetric,
+                                )
+                                Q_mn_m_n_12[idx, idx_] = Q_mn_m_n_(
+                                    m,
+                                    n,
+                                    m_,
+                                    n_,
+                                    k1,
+                                    k2,
+                                    k1r_array,
+                                    k2r_array,
+                                    r_array,
+                                    θ_array,
+                                    ϕ_array,
+                                    n̂_array;
+                                    kind = kind,
+                                    Q_superscript = 12,
+                                    rotationally_symmetric = rotationally_symmetric,
+                                )
+                                Q_mn_m_n_21[idx, idx_] = Q_mn_m_n_(
+                                    m,
+                                    n,
+                                    m_,
+                                    n_,
+                                    k1,
+                                    k2,
+                                    k1r_array,
+                                    k2r_array,
+                                    r_array,
+                                    θ_array,
+                                    ϕ_array,
+                                    n̂_array;
+                                    kind = kind,
+                                    Q_superscript = 21,
+                                    rotationally_symmetric = rotationally_symmetric,
+                                )
+                                Q_mn_m_n_22[idx, idx_] = Q_mn_m_n_(
+                                    m,
+                                    n,
+                                    m_,
+                                    n_,
+                                    k1,
+                                    k2,
+                                    k1r_array,
+                                    k2r_array,
+                                    r_array,
+                                    θ_array,
+                                    ϕ_array,
+                                    n̂_array;
+                                    kind = kind,
+                                    Q_superscript = 22,
+                                    rotationally_symmetric = rotationally_symmetric,
+                                )
                             end
                         end
                     else
                         if symmetric_about_plane_perpendicular_z && (m == m_)
                             # apply equations 5.208 and 5.209
                             if iseven(n + n_)
-                                Q_mn_m_n_11[idx, idx_] = Q_mn_m_n_(m, n, m_, n_, k1, k2, k1r_array, k2r_array, r_array, θ_array, ϕ_array, n̂_array;kind=kind,Q_superscript=11, rotationally_symmetric=rotationally_symmetric)
-                                Q_mn_m_n_22[idx, idx_] = Q_mn_m_n_(m, n, m_, n_, k1, k2, k1r_array, k2r_array, r_array, θ_array, ϕ_array, n̂_array;kind=kind,Q_superscript=22, rotationally_symmetric=rotationally_symmetric)
+                                Q_mn_m_n_11[idx, idx_] = Q_mn_m_n_(
+                                    m,
+                                    n,
+                                    m_,
+                                    n_,
+                                    k1,
+                                    k2,
+                                    k1r_array,
+                                    k2r_array,
+                                    r_array,
+                                    θ_array,
+                                    ϕ_array,
+                                    n̂_array;
+                                    kind = kind,
+                                    Q_superscript = 11,
+                                    rotationally_symmetric = rotationally_symmetric,
+                                )
+                                Q_mn_m_n_22[idx, idx_] = Q_mn_m_n_(
+                                    m,
+                                    n,
+                                    m_,
+                                    n_,
+                                    k1,
+                                    k2,
+                                    k1r_array,
+                                    k2r_array,
+                                    r_array,
+                                    θ_array,
+                                    ϕ_array,
+                                    n̂_array;
+                                    kind = kind,
+                                    Q_superscript = 22,
+                                    rotationally_symmetric = rotationally_symmetric,
+                                )
                             else
-                                Q_mn_m_n_12[idx, idx_] = Q_mn_m_n_(m, n, m_, n_, k1, k2, k1r_array, k2r_array, r_array, θ_array, ϕ_array, n̂_array;kind=kind,Q_superscript=12, rotationally_symmetric=rotationally_symmetric)
-                                Q_mn_m_n_21[idx, idx_] = Q_mn_m_n_(m, n, m_, n_, k1, k2, k1r_array, k2r_array, r_array, θ_array, ϕ_array, n̂_array;kind=kind,Q_superscript=21, rotationally_symmetric=rotationally_symmetric)
+                                Q_mn_m_n_12[idx, idx_] = Q_mn_m_n_(
+                                    m,
+                                    n,
+                                    m_,
+                                    n_,
+                                    k1,
+                                    k2,
+                                    k1r_array,
+                                    k2r_array,
+                                    r_array,
+                                    θ_array,
+                                    ϕ_array,
+                                    n̂_array;
+                                    kind = kind,
+                                    Q_superscript = 12,
+                                    rotationally_symmetric = rotationally_symmetric,
+                                )
+                                Q_mn_m_n_21[idx, idx_] = Q_mn_m_n_(
+                                    m,
+                                    n,
+                                    m_,
+                                    n_,
+                                    k1,
+                                    k2,
+                                    k1r_array,
+                                    k2r_array,
+                                    r_array,
+                                    θ_array,
+                                    ϕ_array,
+                                    n̂_array;
+                                    kind = kind,
+                                    Q_superscript = 21,
+                                    rotationally_symmetric = rotationally_symmetric,
+                                )
                             end
                         else
-                            Q_mn_m_n_11[idx, idx_] = Q_mn_m_n_(m, n, m_, n_, k1, k2, k1r_array, k2r_array, r_array, θ_array, ϕ_array, n̂_array;kind=kind,Q_superscript=11, rotationally_symmetric=rotationally_symmetric)
-                            Q_mn_m_n_12[idx, idx_] = Q_mn_m_n_(m, n, m_, n_, k1, k2, k1r_array, k2r_array, r_array, θ_array, ϕ_array, n̂_array;kind=kind,Q_superscript=12, rotationally_symmetric=rotationally_symmetric)
-                            Q_mn_m_n_21[idx, idx_] = Q_mn_m_n_(m, n, m_, n_, k1, k2, k1r_array, k2r_array, r_array, θ_array, ϕ_array, n̂_array;kind=kind,Q_superscript=21, rotationally_symmetric=rotationally_symmetric)
-                            Q_mn_m_n_22[idx, idx_] = Q_mn_m_n_(m, n, m_, n_, k1, k2, k1r_array, k2r_array, r_array, θ_array, ϕ_array, n̂_array;kind=kind,Q_superscript=22, rotationally_symmetric=rotationally_symmetric)
+                            Q_mn_m_n_11[idx, idx_] = Q_mn_m_n_(
+                                m,
+                                n,
+                                m_,
+                                n_,
+                                k1,
+                                k2,
+                                k1r_array,
+                                k2r_array,
+                                r_array,
+                                θ_array,
+                                ϕ_array,
+                                n̂_array;
+                                kind = kind,
+                                Q_superscript = 11,
+                                rotationally_symmetric = rotationally_symmetric,
+                            )
+                            Q_mn_m_n_12[idx, idx_] = Q_mn_m_n_(
+                                m,
+                                n,
+                                m_,
+                                n_,
+                                k1,
+                                k2,
+                                k1r_array,
+                                k2r_array,
+                                r_array,
+                                θ_array,
+                                ϕ_array,
+                                n̂_array;
+                                kind = kind,
+                                Q_superscript = 12,
+                                rotationally_symmetric = rotationally_symmetric,
+                            )
+                            Q_mn_m_n_21[idx, idx_] = Q_mn_m_n_(
+                                m,
+                                n,
+                                m_,
+                                n_,
+                                k1,
+                                k2,
+                                k1r_array,
+                                k2r_array,
+                                r_array,
+                                θ_array,
+                                ϕ_array,
+                                n̂_array;
+                                kind = kind,
+                                Q_superscript = 21,
+                                rotationally_symmetric = rotationally_symmetric,
+                            )
+                            Q_mn_m_n_22[idx, idx_] = Q_mn_m_n_(
+                                m,
+                                n,
+                                m_,
+                                n_,
+                                k1,
+                                k2,
+                                k1r_array,
+                                k2r_array,
+                                r_array,
+                                θ_array,
+                                ϕ_array,
+                                n̂_array;
+                                kind = kind,
+                                Q_superscript = 22,
+                                rotationally_symmetric = rotationally_symmetric,
+                            )
                         end
+                    end
+                end
             end
         end
     end
-        end
-    end
-    Q = vcat(
-        (hcat(Q_mn_m_n_11, Q_mn_m_n_12)),
-        (hcat(Q_mn_m_n_21, Q_mn_m_n_22))
-    )
+    Q = vcat((hcat(Q_mn_m_n_11, Q_mn_m_n_12)), (hcat(Q_mn_m_n_21, Q_mn_m_n_22)))
     return Q
 end
 
 function T_matrix(
-        n_max::Int,
-        k1::C, k2::C,
-        k1r_array::AbstractVecOrMat{C}, k2r_array::AbstractVecOrMat{C},
-        r_array::AbstractVecOrMat{R}, θ_array::AbstractVecOrMat{R}, ϕ_array::AbstractVecOrMat{R}, n̂_array::Any; # TODO: I don't know why I get an error when I use n̂_array::AbstractVecOrMat{Vector{Float64}}
-        rotationally_symmetric=false, symmetric_about_plane_perpendicular_z=false, HDF5_filename=nothing,
-        verbose=false, create_new_arrays=false, BigFloat_precision = nothing
-    ) where {R <: Real, C <: Complex{R}}
-
+    n_max::Int,
+    k1::C,
+    k2::C,
+    k1r_array::AbstractVecOrMat{C},
+    k2r_array::AbstractVecOrMat{C},
+    r_array::AbstractVecOrMat{R},
+    θ_array::AbstractVecOrMat{R},
+    ϕ_array::AbstractVecOrMat{R},
+    n̂_array::Any; # TODO: I don't know why I get an error when I use n̂_array::AbstractVecOrMat{Vector{Float64}}
+    rotationally_symmetric = false,
+    symmetric_about_plane_perpendicular_z = false,
+    HDF5_filename = nothing,
+    verbose = false,
+    create_new_arrays = false,
+    BigFloat_precision = nothing,
+) where {R <: Real, C <: Complex{R}}
     if BigFloat_precision != nothing
         return setprecision(BigFloat_precision) do
             return T_matrix(
-                n_max, big(k1), big(k2), big.(k1r_array), big.(k2r_array), big.(r_array), big.(θ_array), big.(ϕ_array), [big.(n) for n in n̂_array];
-                HDF5_filename=HDF5_filename, rotationally_symmetric=rotationally_symmetric, symmetric_about_plane_perpendicular_z=symmetric_about_plane_perpendicular_z,                
-            )            
+                n_max,
+                big(k1),
+                big(k2),
+                big.(k1r_array),
+                big.(k2r_array),
+                big.(r_array),
+                big.(θ_array),
+                big.(ϕ_array),
+                [big.(n) for n in n̂_array];
+                HDF5_filename = HDF5_filename,
+                rotationally_symmetric = rotationally_symmetric,
+                symmetric_about_plane_perpendicular_z = symmetric_about_plane_perpendicular_z,
+            )
         end
     else
         if create_new_arrays
-            RgQ =       Q_matrix(n_max, k1, k2, k1r_array, k2r_array, r_array, θ_array, ϕ_array, n̂_array;kind="regular"  , rotationally_symmetric=rotationally_symmetric, symmetric_about_plane_perpendicular_z=symmetric_about_plane_perpendicular_z, verbose=verbose)
-            Q_inv = inv(Q_matrix(n_max, k1, k2, k1r_array, k2r_array, r_array, θ_array, ϕ_array, n̂_array;kind="irregular", rotationally_symmetric=rotationally_symmetric, symmetric_about_plane_perpendicular_z=symmetric_about_plane_perpendicular_z, verbose=verbose))
+            RgQ = Q_matrix(
+                n_max,
+                k1,
+                k2,
+                k1r_array,
+                k2r_array,
+                r_array,
+                θ_array,
+                ϕ_array,
+                n̂_array;
+                kind = "regular",
+                rotationally_symmetric = rotationally_symmetric,
+                symmetric_about_plane_perpendicular_z = symmetric_about_plane_perpendicular_z,
+                verbose = verbose,
+            )
+            Q_inv = inv(
+                Q_matrix(
+                    n_max,
+                    k1,
+                    k2,
+                    k1r_array,
+                    k2r_array,
+                    r_array,
+                    θ_array,
+                    ϕ_array,
+                    n̂_array;
+                    kind = "irregular",
+                    rotationally_symmetric = rotationally_symmetric,
+                    symmetric_about_plane_perpendicular_z = symmetric_about_plane_perpendicular_z,
+                    verbose = verbose,
+                ),
+            )
             T = -1 .* RgQ * Q_inv
 
         else
             T = (
-                -     Q_matrix(n_max, k1, k2, k1r_array, k2r_array, r_array, θ_array, ϕ_array, n̂_array;kind="regular"  , rotationally_symmetric=rotationally_symmetric, symmetric_about_plane_perpendicular_z=symmetric_about_plane_perpendicular_z, verbose=verbose)
-                * inv(Q_matrix(n_max, k1, k2, k1r_array, k2r_array, r_array, θ_array, ϕ_array, n̂_array;kind="irregular", rotationally_symmetric=rotationally_symmetric, symmetric_about_plane_perpendicular_z=symmetric_about_plane_perpendicular_z, verbose=verbose))
+                -Q_matrix(
+                    n_max,
+                    k1,
+                    k2,
+                    k1r_array,
+                    k2r_array,
+                    r_array,
+                    θ_array,
+                    ϕ_array,
+                    n̂_array;
+                    kind = "regular",
+                    rotationally_symmetric = rotationally_symmetric,
+                    symmetric_about_plane_perpendicular_z = symmetric_about_plane_perpendicular_z,
+                    verbose = verbose,
+                ) * inv(
+                    Q_matrix(
+                        n_max,
+                        k1,
+                        k2,
+                        k1r_array,
+                        k2r_array,
+                        r_array,
+                        θ_array,
+                        ϕ_array,
+                        n̂_array;
+                        kind = "irregular",
+                        rotationally_symmetric = rotationally_symmetric,
+                        symmetric_about_plane_perpendicular_z = symmetric_about_plane_perpendicular_z,
+                        verbose = verbose,
+                    ),
+                )
             )
         end
 
@@ -364,50 +820,74 @@ end
 BigFloat_precision : set to `nothing` by default. When BigFloat_precision == nothing, then the function will use input types as they are.
 """
 function calculate_Tmatrix_for_spheroid(
-        rx::R, rz::R, n_max::Int,
-        k1::Complex{R}, k2::Complex{R};
-        n_θ_points=10, n_ϕ_points=20, HDF5_filename=nothing,
-        rotationally_symmetric=false, symmetric_about_plane_perpendicular_z=false,
-        BigFloat_precision = nothing
-    ) where {R <: Real}    
-    
+    rx::R,
+    rz::R,
+    n_max::Int,
+    k1::Complex{R},
+    k2::Complex{R};
+    n_θ_points = 10,
+    n_ϕ_points = 20,
+    HDF5_filename = nothing,
+    rotationally_symmetric = false,
+    symmetric_about_plane_perpendicular_z = false,
+    BigFloat_precision = nothing,
+) where {R <: Real}
+
     # create a grid of θ_ϕ
-    θ_array, ϕ_array = meshgrid_θ_ϕ(n_θ_points, n_ϕ_points; min_θ=1e-16, min_ϕ=1e-16, rotationally_symmetric=rotationally_symmetric)    
-    
+    θ_array, ϕ_array = meshgrid_θ_ϕ(
+        n_θ_points,
+        n_ϕ_points;
+        min_θ = 1e-16,
+        min_ϕ = 1e-16,
+        rotationally_symmetric = rotationally_symmetric,
+    )
+
     # calculate r and n̂ for the geometry
-    r_array, n̂_array = ellipsoid(rx, rz, θ_array);
+    r_array, n̂_array = ellipsoid(rx, rz, θ_array)
 
     # calculate T-matrix
-    k1r_array = k1 .* r_array;
-    k2r_array = k2 .* r_array;
+    k1r_array = k1 .* r_array
+    k2r_array = k2 .* r_array
     T = T_matrix(
-        n_max, k1, k2, k1r_array, k2r_array, r_array, θ_array, ϕ_array, n̂_array;
-        HDF5_filename=HDF5_filename, rotationally_symmetric=rotationally_symmetric, symmetric_about_plane_perpendicular_z=symmetric_about_plane_perpendicular_z,
-        BigFloat_precision = BigFloat_precision
+        n_max,
+        k1,
+        k2,
+        k1r_array,
+        k2r_array,
+        r_array,
+        θ_array,
+        ϕ_array,
+        n̂_array;
+        HDF5_filename = HDF5_filename,
+        rotationally_symmetric = rotationally_symmetric,
+        symmetric_about_plane_perpendicular_z = symmetric_about_plane_perpendicular_z,
+        BigFloat_precision = BigFloat_precision,
     )
     return T
 end
 
 """
     General and nice wrapper for T-matric
+
 Inputs
 surrounding material (e.g., dielectric constant, refractive index, wavevector)
 particle material (e.g., dielectric constant, refractive index, wavevector)
 angular_resolution
 n_max
 particle geometry: it can be:
-- function ``r(θ)`` (i.e., axi-symmetric particle)
-- a function ``r(θ,ϕ)`` (i.e., arbitrary 3D particle)
-- a meshfile
-- a string defining geometry class (e.g., "cylinder", "spheroid", "ellipsoid", etc.)
+
+  - function ``r(θ)`` (i.e., axi-symmetric particle)
+  - a function ``r(θ,ϕ)`` (i.e., arbitrary 3D particle)
+  - a meshfile
+  - a string defining geometry class (e.g., "cylinder", "spheroid", "ellipsoid", etc.)
 
 # output
-# - T_matrix,
+
+# - T_matrix,    # TODO
 """
 function Tmatrix_nice()
     # TODO
 end
-
 
 ### precompiling
 """
